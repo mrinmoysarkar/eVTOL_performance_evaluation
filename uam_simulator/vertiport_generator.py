@@ -10,14 +10,14 @@ import numpy as np
 import pandas as pd
 
 class vertiport:
-    def __init__(self, num_vertiport, leg_distance=34725, max_capacity=10):
+    def __init__(self, num_vertiport, leg_distance=34725, max_capacity=20):
         self.num_vertiport = num_vertiport
         self.leg_distance = leg_distance
         self.max_capacity = max_capacity
         self.vertiport_db = None
     
     def create_vertiports(self):
-        vertiport_db = np.zeros((self.num_vertiport,5)) # vertiport_id, x, y, z, capacity
+        vertiport_db = np.zeros((self.num_vertiport,7)) # vertiport_id, x, y, z, takeoff_capacity, land_capacity, total_capacity
         cos_x = np.cos(np.radians(60))
         sin_y = np.sin(np.radians(60))
         heagon_tempate_xy = [(-1,0),
@@ -28,24 +28,32 @@ class vertiport:
                              (cos_x, sin_y)]
         n = len(heagon_tempate_xy)
         vertiport_id = 1
-        vertiport_db[0,:] = [vertiport_id, 0, 0, 0, np.random.randint(1,self.max_capacity+1)]
+        takeoff_capacity = np.random.randint(1,self.max_capacity+1)
+        land_capacity = np.random.randint(1,self.max_capacity+1)
+        total_capacity = takeoff_capacity + land_capacity
+        vertiport_db[0,:] = [vertiport_id, 0, 0, 0, takeoff_capacity, land_capacity, total_capacity]
         vertiport_id += 1
         for i in range(1, self.num_vertiport):
             multiplier = self.leg_distance* ((i-1)//n + 1)
             xy = heagon_tempate_xy[(i-1)%n]
+            takeoff_capacity = np.random.randint(1,self.max_capacity+1)
+            land_capacity = np.random.randint(1,self.max_capacity+1)
+            total_capacity = takeoff_capacity + land_capacity
             vertiport_db[i,:] = [vertiport_id, 
                                  xy[0]*multiplier, 
                                  xy[1]*multiplier, 
                                  0, 
-                                 np.random.randint(1,self.max_capacity+1)]
+                                 takeoff_capacity,
+                                 land_capacity,
+                                 total_capacity]
             vertiport_id += 1
         vertiport_db[:,1] -= np.min(vertiport_db[:,1])
         vertiport_db[:,2] -= np.min(vertiport_db[:,2])
         self.vertiport_db = vertiport_db
         
     def save_vertiports(self):
-        df = pd.DataFrame(data=self.vertiport_db, columns=['vertiport_id','x','y','z','capacity'])
-        df.to_csv("vertiport_db.csv", index=False)
+        df = pd.DataFrame(data=self.vertiport_db, columns=['vertiport_id','x','y','z','takeoff_capacity','land_capacity','total_capacity'])
+        df.to_csv("../config/vertiport_db.csv", index=False)
         
         
 if __name__ == '__main__':

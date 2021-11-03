@@ -17,6 +17,7 @@
 from SUAVE.Core import Data  
 import numpy as np
 import scipy.interpolate as interp
+import os
 
 ## @ingroup Methods-Geometry-Two_Dimensional-Cross_Section-Airfoil
 def  import_airfoil_geometry(airfoil_geometry_files, npoints = 100):
