@@ -169,9 +169,9 @@ class Simulation:
         self.my_logger.remove_logfile()
 
     def run(self):
-        # self._run()
-        thread = Thread(target=self._run)
-        thread.start()
+        self._run()
+        # thread = Thread(target=self._run)
+        # thread.start()
         # If saving in the _run method, no need to join the thread
         # If not, then join the thread to wait for the logs
         # if not self.save_file:

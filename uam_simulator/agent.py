@@ -398,6 +398,8 @@ class Agent:
                 # Find Time of Closest Approach
                 delta_pos = self.position - neighbor.position
                 dist=np.linalg.norm(delta_pos)
+                if dist == 0:
+                    continue
                 delta_vel = desired_velocity - neighbor.velocity
                 if np.linalg.norm(delta_vel)==0:
                     t_cpa=0
