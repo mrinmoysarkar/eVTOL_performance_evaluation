@@ -17,9 +17,9 @@ time_step = 1 # Set to 10 for strategic agents, 1 for reactive agents
 simulation_length = float('inf')  # Set to infinity to simulate until n_agents_results agents that were created after t0 have exited the simulation
 n_agent_results = 100  # See above
 
-n_intruder = 5  # Number of agents in the simulation (simulation starts at 0 agents and adds agent at a constant rate until n_intruder is achieved)
-simulation_type = 'reactive'  # set to 'reactive' (access control: free) or 'strategic' (access control: 4DT contract)
-algo_type = 'MVP_Bluesky'  # For reactive: MVP_Bluesky, ORCA, straight. For strategic: Decoupled, LocalVO, SIPP
+n_intruder = 15  # Number of agents in the simulation (simulation starts at 0 agents and adds agent at a constant rate until n_intruder is achieved)
+simulation_type = 'strategic'  # set to 'reactive' (access control: free) or 'strategic' (access control: 4DT contract)
+algo_type = 'Decoupled'  # For reactive: MVP_Bluesky, ORCA, straight. For strategic: Decoupled, LocalVO, SIPP
 structure = None  # None or {'type': 'layer', 'parameters': [0, 180]}. The range for the layer is specified in degrees in parameters and can be set to any number
 
 visualization = True  # Turn visualization on or off. If visualization is on, the file must be saved in the simulation thread

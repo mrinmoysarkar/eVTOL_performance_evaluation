@@ -7,11 +7,15 @@ import math
 import json
 from sklearn.neighbors import KDTree
 
+import sys
+sys.path.append('./uam_simulator')
+
+from weather_manager import weather_manager
 
 class Environment:
     def __init__(self, size_map, min_distance, agent_speed, sensing_radius, tolerance, utm_on, desired_number_of_agents=1,centralized_manager=None,
                  multiple_planning_agents=False, structure=None, simulation_type='reactive', algo_type='A_star_8', log_type='short', log_density=False,
-                 n_valid_agents_for_simulation_end=None,logger=MyLogger()):
+                 n_valid_agents_for_simulation_end=None,logger=MyLogger(), location='ATL', month='January'):
         # should add a buffer around the environment to prevent initialization glitches
         # Or pop some opposing aircraft in the middle
         # Requires agent speed to create the UTM (not very elegant, need to find a different solution, but will do for now)
@@ -63,6 +67,9 @@ class Environment:
         self.debug_time =0
         self.agent_oldest_time=0
         self.vertiport_db = None
+        self.weather_manager = weather_manager('./weather_data/Summarized_Wind_Statistics.csv')
+        self.location = location
+        self.month = month
 
     def run(self, time, sim_dt):
         # Agents decide what their next move is

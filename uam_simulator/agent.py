@@ -201,6 +201,13 @@ class Agent:
         self.flight_leg=flight_leg
         self.trajectory_4DT = []
         self.flight_phase = 'nothold'
+        
+        self.wind_change_period = 300 #seconds
+        self.wind_gust_change_period = 600 #seconds
+        self.wind_change_counter = 0
+        self.wind_gust_change_counter = 0
+        self.wind_velocity = None
+        self.wind_gust_velocity = None
 
     def get_predicted_end_time(self):
         if self.flightPlan is not None:
@@ -222,6 +229,25 @@ class Agent:
                     self.algo_type = 'MVP'
                 self.new_velocity = self.collision_avoidance(dt, algo_type=self.algo_type)
                 self.new_velocity = self.velocity_update(self.new_velocity)
+                # consider wind effect here
+                if self.environment.location is not None:
+                    if self.wind_velocity is None or self.wind_change_counter>self.wind_change_period:
+                        self.wind_change_counter = 0
+                        wind_speed = self.environment.weather_manager.get_wind_speed(self.environment.location, self.environment.month)
+                        wind_theta = self.environment.weather_manager.get_wind_dirct(self.environment.location, self.environment.month)
+                        self.wind_velocity = np.array([wind_speed*np.cos(wind_theta), wind_speed*np.sin(wind_theta)])
+                    self.new_velocity += 0.7*self.wind_velocity
+                        
+                    if self.wind_gust_velocity is None or self.wind_gust_change_counter>self.wind_gust_change_period:
+                        self.wind_gust_change_counter = 0
+                        wind_gust_speed = self.environment.weather_manager.get_wind_gust_speed(self.environment.location, self.environment.month)
+                        wind_gust_theta = self.environment.weather_manager.get_wind_gust_dirct(self.environment.location, self.environment.month)
+                        self.wind_gust_velocity = np.array([wind_gust_speed*np.cos(wind_gust_theta), wind_gust_speed*np.sin(wind_gust_theta)])
+                        self.new_velocity += 0.8*self.wind_gust_velocity
+                        
+                    self.wind_change_counter += dt
+                    self.wind_gust_change_counter += dt
+                
                 self.new_position += self.new_velocity * dt
             if self.agent_logic == 'strategic':
                 # Follow flight plan (without consideration for kinematic properties)

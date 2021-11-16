@@ -18,12 +18,14 @@ from SUAVE.Plots.Geometry_Plots import *
 import numpy as np
 import pandas as pd
 import time
+import os
+import threading
 
 sys.path.append('./SUAVE/regression/scripts/Vehicles')
 sys.path.append('./uam_simulator')
 # the analysis functions
 
-from performance_analysis import performanceanalyzer
+# from performance_analysis import performanceanalyzer
 
 from Stopped_Rotor import vehicle_setup
 
@@ -31,72 +33,75 @@ from Stopped_Rotor import vehicle_setup
 #   Main
 # ----------------------------------------------------------------------
 
-def main():
-    np.random.seed(77)  # Set a random seed to ensure repeatability of a given run
-    
+def main(start_indx, end_indx):
     start_time = time.time()
-    pa = performanceanalyzer('./logs/example_run.json')
-    pa.load_data()
-    all_tj = pa.get_all_trajectories()
-    count = 0
-    for i,tj in enumerate(all_tj):
-        # if count == 1:
-        #     break
-        # count += 1
-       # build the vehicle, configs, and analyses
-        configs, analyses = full_setup(tj)
-        analyses.finalize()
-        '''
-        # Print weight properties of vehicle
-        weights = configs.weight_breakdown
-        print(weights)
-        print(configs.mass_properties.center_of_gravity)
-    
-        # check weights
-        empty_r       = 831.0480821239719
-        structural_r  = 321.68932478738003
-        total_r       = 1031.0480821239719
-        lift_rotors_r = 16.445392185186808
-        propellers_r  = 3.2944573008378044
-        prop_motors_r = 2.0
-        rot_motors_r  = 36.0
-    
-        weights_error = Data()
-        weights_error.empty       = abs(empty_r - weights.empty)/empty_r
-        weights_error.structural  = abs(structural_r - weights.structural)/structural_r
-        weights_error.total       = abs(total_r - weights.total)/total_r
-        weights_error.lift_rotors = abs(lift_rotors_r - weights.lift_rotors)/lift_rotors_r
-        weights_error.propellers  = abs(propellers_r - weights.propellers)/propellers_r
-        weights_error.propellers  = abs(prop_motors_r - weights.propeller_motors)/prop_motors_r
-        weights_error.propellers  = abs(rot_motors_r - weights.lift_rotor_motors)/rot_motors_r
-    
-        for k, v in weights_error.items():
-            assert (np.abs(v) < 1E-6)
-        '''
-        # evaluate mission
-        mission   = analyses.mission
-        results   = mission.evaluate()
-    
-        # plot results
-        # plot_mission(results,configs)
-        save_results_as_csv(results,i+1)
+    all_UTM_data_df = pd.read_csv('./logs/all_UTM_sim_data.csv')
+    input_path = './logs/all_trajectories/'
+    for row_id in range(start_indx, end_indx):
+        agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
+        eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
+        if eVTOL_type == 'lift_and_cruse':
+            trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
+            tj = trajectory_data.values
+            tj = compress_trajectory(tj)
+            
+            # build the vehicle, configs, and analyses
+            configs, analyses = full_setup(agent_id,tj)
+            analyses.finalize()
+            # evaluate mission
+            mission   = analyses.mission
+            results   = mission.evaluate()
+            save_results_as_csv(results, agent_id)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time))
+
+
+
+
+def compress_trajectory(tj):
+    x1 = tj[0,0]
+    y1 = tj[0,1]
+    x2 = tj[1,0]
+    y2 = tj[1,1]
+    m = (y1-y2)/(x1-x2)
+    c = y1 - m*x1
+    N = tj.shape[0]
+    prev_speed = np.linalg.norm(tj[0,2:4])
+    new_tj = []
+    new_tj.append(tj[0,:])
+    for i in range(1,N):
+        x2 = tj[i,0]
+        y2 = tj[i,1]
+        cur_speed = np.linalg.norm(tj[i,2:4])
+        err_speed = abs(cur_speed - prev_speed)
+        err = abs(y2 - (m*x2+c))
+        if err < 10e-9 and i+1 != N and err_speed < 10e-9:
+            pass
+        else:
+            new_tj.append(tj[i,:])
+            m = (y1-y2)/(x1-x2)
+            c = y1 - m*x1
+        prev_speed = cur_speed
+        x1,y1 = x2,y2
+        
+    # print(new_tj)
+    # print("**********************************")
+    return np.array(new_tj)
 
 # ----------------------------------------------------------------------
 #   Analysis Setup
 # ----------------------------------------------------------------------
-def full_setup(tj):
+def full_setup(profile_id, tj):
 
     # vehicle data
     vehicle  = vehicle_setup()
-    plot_vehicle(vehicle,plot_control_points = False)
+    # plot_vehicle(vehicle,plot_control_points = False)
 
     # vehicle analyses
     analyses = base_analysis(vehicle)
 
     # mission analyses
-    mission  = mission_setup(analyses,vehicle,tj)
+    mission  = mission_setup(analyses,vehicle,tj,profile_id)
 
     analyses.mission = mission
 
@@ -136,11 +141,11 @@ def base_analysis(vehicle):
     analyses.append(energy)
 
 
-    # ------------------------------------------------------------------
-    #  Noise Analysis
-    noise = SUAVE.Analyses.Noise.Fidelity_One()
-    noise.geometry = vehicle
-    analyses.append(noise)
+    # # ------------------------------------------------------------------
+    # #  Noise Analysis
+    # noise = SUAVE.Analyses.Noise.Fidelity_One()
+    # noise.geometry = vehicle
+    # analyses.append(noise)
 
     # ------------------------------------------------------------------
     #  Planet Analysis
@@ -156,8 +161,18 @@ def base_analysis(vehicle):
     return analyses
 
 
-def mission_setup(analyses,vehicle,tj):
-
+def mission_setup(analyses,vehicle,tj,profile_id):
+    segment_type = []
+    climb_rate = []
+    descend_rate = []
+    start_altitude = []
+    end_altitude = []
+    climb_angle = []
+    descent_angle = []
+    speed_spec = []
+    time_required = []
+    
+    
     # ------------------------------------------------------------------
     #   Initialize the Mission
     # ------------------------------------------------------------------
@@ -186,10 +201,10 @@ def mission_setup(analyses,vehicle,tj):
     g      = 9.81
     S      = vehicle.reference_area
     atmo   = SUAVE.Analyses.Atmospheric.US_Standard_1976()
-    rho    = atmo.compute_values(1000.*Units.feet,0.).density
+    rho    = atmo.compute_values(1500.*Units.feet,0.).density
     CLmax  = 1.2
     Vstall = float(np.sqrt(2.*m*g/(rho*S*CLmax)))
-    print(Vstall)
+    # print(Vstall)
 
     # ------------------------------------------------------------------
     #   takeoff
@@ -209,6 +224,16 @@ def mission_setup(analyses,vehicle,tj):
                                                                                     initial_throttle_lift = 0.9)
     # add to misison
     mission.append_segment(segment)
+    
+    segment_type.append(segment.tag)
+    climb_rate.append(segment.climb_rate)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end )
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(np.nan)
+    time_required.append(np.nan)
 
     
 
@@ -227,6 +252,15 @@ def mission_setup(analyses,vehicle,tj):
     # add to misison
     mission.append_segment(segment)
     
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end)
+    climb_angle.append(segment.climb_angle)
+    descent_angle.append(np.nan)
+    speed_spec.append(segment.air_speed)
+    time_required.append(np.nan)
 
     # ------------------------------------------------------------------
     #   Departure Terminal Procedure
@@ -243,6 +277,16 @@ def mission_setup(analyses,vehicle,tj):
 
     # add to misison
     mission.append_segment(segment)
+    
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude)
+    end_altitude.append(segment.altitude)
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(segment.air_speed)
+    time_required.append(segment.time)
 
 
     # ------------------------------------------------------------------
@@ -259,20 +303,24 @@ def mission_setup(analyses,vehicle,tj):
 
     # add to misison
     mission.append_segment(segment)
+    
+    segment_type.append(segment.tag)
+    climb_rate.append(segment.climb_rate)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end)
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(segment.air_speed)
+    time_required.append(np.nan)
+    
 
-    ######
-    # pa = performanceanalyzer('/media/ariac/DATAPART1/mrinmoys-document/UAM_simulator_scitech2021/logs/example_run.json')
-    # pa.load_data()
-    # tj = pa.plot_trajectories()
-    # print(tj.shape)
+    
     total_t = 0
     speed = 0
     for i in range(tj.shape[0]-1):
         total_t = tj[i+1,4] - tj[i,4]
         speed = np.linalg.norm(tj[i,2:4])
-    # speed /= tj.shape[0]
-    # t = total_t
-    # print(Vstall, speed)
         # ------------------------------------------------------------------
         #   Cruise
         # ------------------------------------------------------------------
@@ -288,6 +336,16 @@ def mission_setup(analyses,vehicle,tj):
     
         # add to misison
         mission.append_segment(segment)
+        
+        segment_type.append(segment.tag)
+        climb_rate.append(np.nan)
+        descend_rate.append(np.nan)
+        start_altitude.append(segment.altitude)
+        end_altitude.append(segment.altitude)
+        climb_angle.append(np.nan)
+        descent_angle.append(np.nan)
+        speed_spec.append(segment.air_speed)
+        time_required.append(segment.time)
     
     
     # ------------------------------------------------------------------
@@ -306,6 +364,15 @@ def mission_setup(analyses,vehicle,tj):
     # add to misison
     mission.append_segment(segment)
     
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(segment.descent_rate)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end)
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(segment.air_speed)
+    time_required.append(np.nan)
     
     # ------------------------------------------------------------------
     #   Arrival Terminal Procedure
@@ -323,6 +390,16 @@ def mission_setup(analyses,vehicle,tj):
     # add to misison
     mission.append_segment(segment)
     
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude)
+    end_altitude.append(segment.altitude)
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(segment.air_speed)
+    time_required.append(segment.time)
+    
     # ------------------------------------------------------------------
     #   Transition
     # ------------------------------------------------------------------
@@ -337,6 +414,16 @@ def mission_setup(analyses,vehicle,tj):
 
     # add to misison
     mission.append_segment(segment)
+    
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(np.nan)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end)
+    climb_angle.append(np.nan)
+    descent_angle.append(segment.descent_angle)
+    speed_spec.append(segment.air_speed)
+    time_required.append(np.nan)
     
     # ------------------------------------------------------------------
     #   Land
@@ -355,57 +442,74 @@ def mission_setup(analyses,vehicle,tj):
 
     # add to misison
     mission.append_segment(segment)
+    
+    segment_type.append(segment.tag)
+    climb_rate.append(np.nan)
+    descend_rate.append(segment.descent_rate)
+    start_altitude.append(segment.altitude_start)
+    end_altitude.append(segment.altitude_end)
+    climb_angle.append(np.nan)
+    descent_angle.append(np.nan)
+    speed_spec.append(np.nan)
+    time_required.append(np.nan)
+    
+    profile_spec_df = pd.DataFrame(data={'segment_type':segment_type,
+                                    'climb_rate':climb_rate,
+                                    'descend_rate':descend_rate,
+                                    'start_altitude':start_altitude,
+                                    'end_altitude':end_altitude,
+                                    'climb_angle':climb_angle,
+                                    'descent_angle':descent_angle,
+                                    'speed':speed_spec,
+                                    'time_required':time_required
+                                    })
+    
+    base_path = "./logs/profiles_eval/"
+    profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
 
     return mission
 
 
-
-# ----------------------------------------------------------------------
-#   Plot Results
-# ----------------------------------------------------------------------
-def plot_mission(results,vec_configs,line_style='bo-'):
-
-    # Plot Flight Conditions
-    plot_flight_conditions(results, line_style)
-
-    # Plot Aerodynamic Coefficients
-    # plot_aerodynamic_coefficients(results, line_style)
-
-    # Plot Aircraft Flight Speed
-    # plot_aircraft_velocities(results, line_style)
-
-    # Plot Aircraft Electronics
-    plot_electronic_conditions(results, line_style)
-
-    # Plot Electric Motor and Propeller Efficiencies  of Lift Cruise Network
-    # plot_lift_cruise_network(results, line_style)
-
-    return
-
-def load_stopped_rotor_results():
-    return SUAVE.Input_Output.SUAVE.load('results_stopped_rotor.res')
-
-def save_stopped_rotor_results(results):
-
-    for segment in results.segments.values():
-        del segment.conditions.noise
-
-    SUAVE.Input_Output.SUAVE.archive(results,'results_stopped_rotor.res')
-    return
-
 def save_results_as_csv(results, profile_id=0):
     labels = results.segments.keys()
+    eVTOL_type = 'lift_and_cruse'
+    
+    eVTOL_type_profile = []
+    mission_segment_profile = []
     time_profile = []
-    range_profile = []
+    power_profile = []
     energy_profile = []
-    c_rating_profile = []
+    volts_profile = []
+    volts_oc_profile = []
+    current_profile = []
+    C_rating_profile = []
+    propeller_throttle_profile = []
+    lift_throttle_profile = []
+    propeller_efficiency_profile = []
+    motor_efficiency_profile = []
+    lift_profile = []
+    drag_profile = []
+    mass_profile = []
+    thrust_profile = []
+    speed_profile = []
+    air_speed_profile = []
+    propeller_disk_loading_profile = []
+    peopeller_power_loading_profile = []
+    lift_disk_loading_profile = []
+    lift_power_loadind_profile = []
+    mach_number_profile = []
+    AoA_profile = []
+    CL_profile = []
+    CD_profile = []
+    L_D_profile = []
+    x_profile = []
+    y_profile = []
     altitude_profile = []
-    voltage_profile = []
-    propeller_throttle = []
-    lift_throttle = []
-    airspeed_profile = []
-    label_profile = []
-    converged_profile = []
+    roll_profile = []
+    pitch_profile = []
+    yaw_profile = []
+    fesibility_profile = []
+    
     converged = True
     
     for i in range(len(results.segments)):  
@@ -413,53 +517,186 @@ def save_results_as_csv(results, profile_id=0):
         converged = converged and results.segments[i].converged
         # print(label,results.segments[i].converged)
         time           = results.segments[i].conditions.frames.inertial.time[:,0] / Units.min #minuites
-        power          = results.segments[i].conditions.propulsion.battery_draw[:,0]  #(Watts)
+        time_profile += list(time)
+        
+        eVTOL_type_profile += [eVTOL_type]*len(list(time))
+        
+        mission_segment_profile += [label]*len(list(time))
+        
+        power          = -results.segments[i].conditions.propulsion.battery_draw[:,0]  #(Watts)
+        power_profile += list(power)
+        
         energy         = results.segments[i].conditions.propulsion.battery_energy[:,0]/Units.Wh #W-hr
+        energy_profile += list(energy)
+        
         volts          = results.segments[i].conditions.propulsion.battery_voltage_under_load[:,0] #volts
-        volts_oc       = results.segments[i].conditions.propulsion.battery_voltage_open_circuit[:,0]     
-        current        = results.segments[i].conditions.propulsion.battery_current[:,0]      
+        volts_profile += list(volts)
+        
+        volts_oc       = results.segments[i].conditions.propulsion.battery_voltage_open_circuit[:,0]
+        volts_oc_profile += list(volts_oc)
+        
+        current        = results.segments[i].conditions.propulsion.battery_current[:,0] 
+        current_profile += list(current)
+        
         battery_amp_hr = (energy/ Units.Wh )/volts  
         C_rating       = current/battery_amp_hr #C-Rate (C)
-        eta            = results.segments[i].conditions.propulsion.throttle[:,0]  # propeller motor throttle
-        eta_l          = results.segments[i].conditions.propulsion.throttle_lift[:,0] #lift motor throttle
+        C_rating_profile += list(C_rating)
         
-        airspeed = results.segments[i].conditions.freestream.velocity[:,0] /   Units['mph']  # speed in mph
-        theta    = results.segments[i].conditions.frames.body.inertial_rotations[:,1,None] / Units.deg
+        eta            = results.segments[i].conditions.propulsion.throttle[:,0]  # propeller motor throttle
+        propeller_throttle_profile += list(eta)
+        
+        eta_l          = results.segments[i].conditions.propulsion.throttle_lift[:,0] #lift motor throttle
+        lift_throttle_profile += list(eta_l)
+        
+        effp   = results.segments[i].conditions.propulsion.etap[:,0] # 'Propeller Efficiency ($\eta_p$)'
+        propeller_efficiency_profile += list(effp)
+        
+        effm   = results.segments[i].conditions.propulsion.etam[:,0] # 'Motor Efficiency ($\eta_m$)'
+        motor_efficiency_profile += list(effm)
+        
+        # prop_rpm     = results.segments[i].conditions.propulsion.propeller_rpm[:,0] 
+        # prop_thrust  = results.segments[i].conditions.frames.body.thrust_force_vector[:,0]
+        # prop_torque  = results.segments[i].conditions.propulsion.propeller_motor_torque[:,0]
+        # prop_effp    = results.segments[i].conditions.propulsion.propeller_efficiency[:,0]
+        # prop_effm    = results.segments[i].conditions.propulsion.propeller_motor_efficiency[:,0]
+        # prop_Cp      = results.segments[i].conditions.propulsion.propeller_power_coefficient[:,0]
+        # lift_rotor_rpm    = results.segments[i].conditions.propulsion.lift_rotor_rpm[:,0] 
+        # lift_rotor_thrust = -results.segments[i].conditions.frames.body.thrust_force_vector[:,2]
+        # lift_rotor_torque = results.segments[i].conditions.propulsion.lift_rotor_motor_torque[:,0]
+        # lift_rotor_effp   = results.segments[i].conditions.propulsion.lift_rotor_efficiency[:,0]
+        # lift_rotor_effm   = results.segments[i].conditions.propulsion.lift_rotor_motor_efficiency[:,0] 
+        # lift_rotor_Cp     = results.segments[i].conditions.propulsion.lift_rotor_power_coefficient[:,0] 
+        
+       
+        Lift   = -results.segments[i].conditions.frames.wind.lift_force_vector[:,2] # in newton
+        lift_profile += list(Lift)
+        
+        Drag   = -results.segments[i].conditions.frames.wind.drag_force_vector[:,0]   # in newton    
+        drag_profile += list(Drag)
+        
+        mass     = results.segments[i].conditions.weights.total_mass[:,0] / Units.lb
+        mass_profile += list(mass)
+        
+        thrust   =  results.segments[i].conditions.frames.body.thrust_force_vector[:,0] # in newton
+        thrust_profile += list(thrust)
+        
+        speed = results.segments[i].conditions.freestream.velocity[:,0] /   Units['mph']  # speed in mph
+        speed_profile += list(speed)
+        
+        density  = results.segments[i].conditions.freestream.density[:,0]
+        equivalent_air_speed      = speed * np.sqrt(density/1.225)
+        air_speed_profile += list(equivalent_air_speed)
+        
+        propeller_Disk_Loading    = results.segments[i].conditions.propulsion.propeller_disc_loading[:,0] #'lift disc power N/m^2'
+        propeller_disk_loading_profile += list(propeller_Disk_Loading)
+        
+        propeller_Power_Loading    = results.segments[i].conditions.propulsion.propeller_power_loading[:,0] #'lift power loading (N/W)'
+        peopeller_power_loading_profile += list(propeller_Power_Loading)
+        
+        lift_Disk_Loading    = results.segments[i].conditions.propulsion.lift_rotor_disc_loading[:,0]
+        lift_disk_loading_profile += list(lift_Disk_Loading)
+        
+        lift_Power_Loading    = results.segments[i].conditions.propulsion.lift_rotor_power_loading[:,0] 
+        lift_power_loadind_profile += list(lift_Power_Loading)
+        
+        
+        
+        
+        mach_number = results.segments[i].conditions.freestream.mach_number[:,0]
+        mach_number_profile += list(mach_number)
+        
+        aoa = results.segments[i].state.conditions.aerodynamics.angle_of_attack[:,0] / Units.deg
+        AoA_profile += list(aoa)
+        
+        lift_coeff = results.segments[i].state.conditions.aerodynamics.lift_coefficient[:,0]
+        CL_profile += list(lift_coeff)
+        
+        drag_coeff = results.segments[i].state.conditions.aerodynamics.drag_coefficient[:,0]
+        CD_profile += list(drag_coeff)
+        
+        lift_by_drag = lift_coeff/drag_coeff
+        L_D_profile += list(lift_by_drag)
         
         x        = results.segments[i].conditions.frames.inertial.position_vector[:,0]/ Units.mile #range mile
-        y        = results.segments[i].conditions.frames.inertial.position_vector[:,1]
-        z        = results.segments[i].conditions.frames.inertial.position_vector[:,2]
+        x_profile += list(x)
+        
+        y        = results.segments[i].conditions.frames.inertial.position_vector[:,1]/ Units.mile
+        y_profile += list(y)
+        
+        
+        # z        = results.segments[i].conditions.frames.inertial.position_vector[:,2]
         altitude = results.segments[i].conditions.freestream.altitude[:,0]/Units.feet  # feet
-        
-        
-        time_profile += list(time)
-        range_profile += list(x)
-        energy_profile += list(energy)
-        c_rating_profile += list(C_rating)
         altitude_profile += list(altitude)
-        voltage_profile += list(volts)
-        propeller_throttle += list(eta)
-        lift_throttle += list(eta_l) 
-        airspeed_profile += list(airspeed)
-        label_profile += [label]*len(list(time))
-        converged_profile += [results.segments[i].converged] * len(list(time))
-    profile_df = pd.DataFrame(data={"time":time_profile,
-                                    "range":range_profile,
-                                    "energy":energy_profile,
-                                    "c_rating":c_rating_profile,
-                                    "altitude":altitude_profile,
-                                    "voltage":voltage_profile,
-                                    "propeller_throttle":propeller_throttle,
-                                    "lift_throttle":lift_throttle,
-                                    "speed":airspeed_profile,
-                                    "label":label_profile,
-                                    "converged":converged_profile})
+        
+        roll    = results.segments[i].conditions.frames.body.inertial_rotations[:,0,None] / Units.deg
+        roll_profile += list(roll)
+        
+        pitch    = results.segments[i].conditions.frames.body.inertial_rotations[:,1,None] / Units.deg
+        pitch_profile += list(pitch) 
+        
+        yaw    = results.segments[i].conditions.frames.body.inertial_rotations[:,2,None] / Units.deg
+        yaw_profile += list(yaw)
+        
+        fesibility_profile += [results.segments[i].converged] * len(list(time))
+        
+        
+    profile_df = pd.DataFrame(data={'eVTOL_type':eVTOL_type_profile,
+                                    'mission_segment':mission_segment_profile,
+                                    'time':time_profile,
+                                    'power':power_profile,
+                                    'energy':energy_profile,
+                                    'volts':volts_profile,
+                                    'volts_oc':volts_oc_profile,
+                                    'current':current_profile,
+                                    'C_rating':C_rating_profile,
+                                    'propeller_throttle':propeller_throttle_profile,
+                                    'lift_throttle':lift_throttle_profile,
+                                    'propeller_efficiency':propeller_efficiency_profile,
+                                    'motor_efficiency':motor_efficiency_profile,
+                                    'lift':lift_profile,
+                                    'drag':drag_profile,
+                                    'mass':mass_profile,
+                                    'thrust':thrust_profile,
+                                    'speed':speed_profile,
+                                    'air_speed':air_speed_profile,
+                                    'propeller_disk_loading':propeller_disk_loading_profile,
+                                    'peopeller_power_loading':peopeller_power_loading_profile,
+                                    'lift_disk_loading':lift_disk_loading_profile,
+                                    'lift_power_loadind':lift_power_loadind_profile,
+                                    'mach_number':mach_number_profile,
+                                    'AoA':AoA_profile,
+                                    'CL':CL_profile,
+                                    'CD':CD_profile,
+                                    'L_D':L_D_profile,
+                                    'x':x_profile,
+                                    'y':y_profile,
+                                    'altitude':altitude_profile,
+                                    'roll':roll_profile,
+                                    'pitch':pitch_profile,
+                                    'yaw':yaw_profile,
+                                    'fesibility':fesibility_profile
+                                    })
     
-    base_path = "/media/ariac/DATAPART1/mrinmoys-document/UAM_simulator_scitech2021/logs/profiles_eval/"
-    profile_df.to_csv(base_path+"profile_"+str(profile_id)+"_converged_"+str(converged)+'.csv', index=False)
+    base_path = "./logs/profiles_eval/"
+    profile_df.to_csv(base_path+"profile_"+str(profile_id)+'.csv', index=False)
         
     
 
 if __name__ == '__main__':
-    main()
-    plt.show(block=True)
+    start_time = time.time()
+    all_UTM_data_df = pd.read_csv('./logs/all_UTM_sim_data.csv')
+    N = all_UTM_data_df.shape[0]
+    num_thread = 48
+    num_sample_in_thread = N//num_thread
+    all_threads = [None]*num_thread
+    for i in range(num_thread):
+        start_indx = i*num_sample_in_thread
+        end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
+        all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
+        all_threads[i].start()
+        all_threads[i].join()
+    
+    end_time = time.time()
+    print("Total Analysis Time: {}s".format(end_time-start_time))
+    
+    

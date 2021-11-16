@@ -15,7 +15,7 @@ class Simulation:
                  structure=None,
                  multiple_planning_agents=True,
                  log_type='short',save_file=True,
-                 log_density=False, update_queue=None,stdout_to_file=False):
+                 log_density=False, update_queue=None,stdout_to_file=False, location='ATL', month='January'):
         """
             length: simulated area length
             n_intruder: number of agents that should be present at the same time in the simulation area
@@ -70,7 +70,8 @@ class Simulation:
                                            structure=structure,
                                            centralized_manager=self.centralized_manager, simulation_type=simulation_type,
                                            algo_type=algorithm_type, log_type=log_type, log_density=log_density,
-                                           n_valid_agents_for_simulation_end=n_valid_agents_for_simulation_end, logger=self.my_logger)
+                                           n_valid_agents_for_simulation_end=n_valid_agents_for_simulation_end, logger=self.my_logger,
+                                           location=location, month=month)
 
         self.length = length
         self.n_intruder = n_intruder

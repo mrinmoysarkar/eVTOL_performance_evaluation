@@ -390,10 +390,10 @@ class Local_VO:
                 self.start_time += self.dt
             else:
                 success = True
-        print("*********************************")
-        print(planned_positions)
-        print(planned_times)
-        print("*********************************")
+        # print("*********************************")
+        # print(planned_positions)
+        # print(planned_times)
+        # print("*********************************")
         return success, planned_positions, planned_times
 
     def setupMIQCP(self, intruders_pos, intruders_vel, desired_vel, ownship_pos):
