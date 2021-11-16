@@ -170,14 +170,20 @@ class Simulation:
         self.my_logger.remove_logfile()
 
     def run(self):
-        self._run()
+        if self.save_file:
+            thread = Thread(target=self._run)
+            thread.start()
+            return
+        else:
+            self._run()
+            return self.logs
         # thread = Thread(target=self._run)
         # thread.start()
         # If saving in the _run method, no need to join the thread
         # If not, then join the thread to wait for the logs
         # if not self.save_file:
         #     thread.join()
-        # return self.logs
+        
 
     def log_inputs(self):
         """ In the log file we need to keep the parameters of that particular simulation """

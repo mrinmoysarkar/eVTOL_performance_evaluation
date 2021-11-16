@@ -6,16 +6,16 @@ import json
 
 # Simulation parameters
 random.seed(77)  # Set a random seed to ensure repeatability of a given run
-simulation_name = 'example_run'  # A string, will be used to name the log file
+simulation_name = 'simple_UTM_sim_run'  # A string, will be used to name the log file
 
 minimum_separation = 500  # m, minimum distance that agents must maintain between each other
 length_arena = 139000  # m, size of the square simulation area
 max_speed = 45  # m/s, maximum velocity of the agents
 sensing_radius = 5000
 
-time_step = 1 # Set to 10 for strategic agents, 1 for reactive agents
+time_step = 10 # Set to 10 for strategic agents, 1 for reactive agents
 simulation_length = float('inf')  # Set to infinity to simulate until n_agents_results agents that were created after t0 have exited the simulation
-n_agent_results = 100  # See above
+n_agent_results = 50  # See above
 
 n_intruder = 15  # Number of agents in the simulation (simulation starts at 0 agents and adds agent at a constant rate until n_intruder is achieved)
 simulation_type = 'strategic'  # set to 'reactive' (access control: free) or 'strategic' (access control: 4DT contract)
@@ -41,7 +41,9 @@ if visualization:
                                 save_file=True,
                                 n_valid_agents_for_simulation_end=n_agent_results,
                                 update_queue=update_queue,
-                                stdout_to_file=True)
+                                stdout_to_file=False,
+                                location=None,
+                                month=None)
     dis = display.Display(update_queue, length_arena, display_update=20 * time_step)
     sim.run()
     dis.run()
@@ -60,7 +62,9 @@ else:
                                 log_type='short',
                                 save_file=False,
                                 n_valid_agents_for_simulation_end=n_agent_results,
-                                stdout_to_file=True)
+                                stdout_to_file=False,
+                                location=None,
+                                month=None)
     log = sim.run()
     filename = 'logs/' + simulation_name + '.json'
     with open(filename, 'w') as file:
