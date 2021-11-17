@@ -11,26 +11,40 @@ Install the following Python packages using pip:
   - scikit-learn
   - scipy
   - zlib
+
 N.B.: The code is tested on Python 3.7
 
 # Experiments
-1. To run a simple simulation run the simple_UTM_sim.py. It will show the simulation GUI. 
+1. To run a simple, simulation run the simple_UTM_sim.py. It will show the simulation GUI. 
 You can change the configuration of the simulation by changing the parameters inside simple_UTM_sim.py.
 
 2. To generate data from this UTM simulator you can run sim_data_generation.py
 
-3. To generate eVTOL performance data run test_vehicle_performance.py 
+3. To generate eVTOL performance data run test_vehicle_peformance_lift_and_cruise.py, or test_vehicle_peformance_multicopter.py, or test_vehicle_peformance_vector_thrust.py  
 
-N.B.:The UTM simulator generates simulation data in JSON format that needs to be converted to CSV file before it can be used by the eVTOL performance evaluator script (test_vehicle_performance.py). So, use convert_json_to_csv.py to convert all the JSON log files and then run test_vehicle_performance.py  
+N.B.:The UTM simulator generates simulation data in JSON format that needs to be converted to CSV file before it can be used by the eVTOL performance evaluator script (test_vehicle_performance_*.py). So, use convert_json_to_csv.py to convert all the JSON log files and then run test_vehicle_performance_*.py  
 
 # UAM Database link
 The generated dataset from this simulation experiments can be found in the following link:
 
+1. UTM dataset: https://drive.google.com/drive/folders/1ty6J5D5wq1vYP6bS8z8jRp9wJTfxeykZ?usp=sharing
+   
+   File Name: all_UTM_sim_data.csv
+
+2. All Trajectory dataset: https://drive.google.com/drive/folders/1ty6J5D5wq1vYP6bS8z8jRp9wJTfxeykZ?usp=sharing 
+    
+   Folder Name: all_trajectories
+
+3. eVTOL performance dataset: https://drive.google.com/drive/folders/1ty6J5D5wq1vYP6bS8z8jRp9wJTfxeykZ?usp=sharing
+   Folder Name: profiles_eval
+
 Researchers can start their experiments and analysis from the dataset instead of running the simulation to generate the dataset.
-But researchers are also encouraged to implement new features on the simulator to make the simulation more realistic for development of novel concepts in UAM domain.  
+But researchers are also encouraged to implement new features on the simulator to make the simulation more realistic for the development of novel concepts in UAM domain.  
 
 # CASE STUDY on the dataset
 Two case study on the UTM dataset is shown in data_analysis_of_UTM_sim_data.ipynb 
+
+N.B. To run the data_analysis_of_UTM_sim_data.ipynb Please download all_UTM_sim_data.csv and change the data_df = pd.read_csv('./logs/all_UTM_sim_data.csv') with the proper directory in the notebook.
 
 
 # Other comments
