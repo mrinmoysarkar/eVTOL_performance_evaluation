@@ -56,8 +56,8 @@ def converge_root(segment):
                                          full_output = 1)
     
     if ier!=1:
-        print("Segment did not converge. Segment Tag: " + segment.tag)
-        print("Error Message:\n" + msg)
+        # print("Segment did not converge. Segment Tag: " + segment.tag)
+        # print("Error Message:\n" + msg)
         segment.state.numerics.converged = False
         segment.converged = False
     else:

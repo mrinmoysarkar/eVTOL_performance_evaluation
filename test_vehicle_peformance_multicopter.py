@@ -27,7 +27,7 @@ sys.path.append('./uam_simulator')
 
 # from performance_analysis import performanceanalyzer
 
-from Stopped_Rotor import vehicle_setup
+from Electric_Multicopter import vehicle_setup
 
 # ----------------------------------------------------------------------
 #   Main

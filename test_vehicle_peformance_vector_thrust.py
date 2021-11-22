@@ -27,7 +27,7 @@ sys.path.append('./uam_simulator')
 
 # from performance_analysis import performanceanalyzer
 
-from Stopped_Rotor import vehicle_setup
+from Tiltwing import vehicle_setup
 
 # ----------------------------------------------------------------------
 #   Main
@@ -40,7 +40,7 @@ def main(start_indx, end_indx):
     for row_id in range(start_indx, end_indx):
         agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
         eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
-        if eVTOL_type == 'lift_and_cruse':
+        if eVTOL_type == 'vector_thrust':
             trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
             tj = trajectory_data.values
             tj = compress_trajectory(tj)

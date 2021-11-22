@@ -23,9 +23,12 @@ def conflicts_num(conflicts1, agent_id1):
 
 #--------------------------------------------------------------------------------------------------------------  
 if __name__ == '__main__':
+    paths = ['trajectory'+str(i)+'/' for i in range(1,26)]
+    num_files = [50000*(i+1) for i in range(len(paths))]
     locations = ['ATL','JFK','BOS','ORD','LAX']
     input_path = './logs/UTM_sim_data/'
-    output_path = './logs/all_trajectories/'
+    # output_path = './logs/all_trajectories/'
+    output_path = './logs/'
     # if output_path[:-1] not in os.listdir():
     #     os.mkdir(output_path)
     files = os.listdir(input_path)
@@ -69,6 +72,7 @@ if __name__ == '__main__':
         times = obj['times']
         file_count += 1
         print(file_count, filename)
+        path_indx = 0
         for agent in agents:
             flight_status = agent['flight_status']
             varinames = agent.keys()
@@ -101,8 +105,14 @@ if __name__ == '__main__':
                 trajectory = np.asarray(agent['4DT_Trajectory'])
                 trajectory = pd.DataFrame(trajectory)
                 trajectory.columns = trajectory_colnames
-                trajectory.to_csv(output_path+trajectory_filename, index = None)
+                trajectory.to_csv(output_path+paths[path_indx]+trajectory_filename, index = None)
                 row_id += 1
+                
+                if row_id in num_files:
+                    path_indx += 1 
+
+                if path_indx >= len(paths):
+                    path_indx = -1     
     
         myfile.close()
     # Aggregate all variables together          

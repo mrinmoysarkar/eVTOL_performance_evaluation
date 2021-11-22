@@ -34,13 +34,16 @@ from Stopped_Rotor import vehicle_setup
 # ----------------------------------------------------------------------
 
 def main(start_indx, end_indx):
+    global num_completed_thread
     start_time = time.time()
-    all_UTM_data_df = pd.read_csv('./logs/all_UTM_sim_data.csv')
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
     input_path = './logs/all_trajectories/'
     for row_id in range(start_indx, end_indx):
         agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
         eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
         if eVTOL_type == 'lift_and_cruse':
+            start_time_tj = time.time()
             trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
             tj = trajectory_data.values
             tj = compress_trajectory(tj)
@@ -52,8 +55,10 @@ def main(start_indx, end_indx):
             mission   = analyses.mission
             results   = mission.evaluate()
             save_results_as_csv(results, agent_id)
+            print(time.time()-start_time_tj, start_indx, end_indx)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time))
+    num_completed_thread += 1
 
 
 
@@ -95,13 +100,12 @@ def full_setup(profile_id, tj):
 
     # vehicle data
     vehicle  = vehicle_setup()
-    # plot_vehicle(vehicle,plot_control_points = False)
 
     # vehicle analyses
     analyses = base_analysis(vehicle)
 
     # mission analyses
-    mission  = mission_setup(analyses,vehicle,tj,profile_id)
+    mission  = mission_setup(analyses, vehicle, tj, profile_id)
 
     analyses.mission = mission
 
@@ -139,13 +143,6 @@ def base_analysis(vehicle):
     energy= SUAVE.Analyses.Energy.Energy()
     energy.network = vehicle.networks
     analyses.append(energy)
-
-
-    # # ------------------------------------------------------------------
-    # #  Noise Analysis
-    # noise = SUAVE.Analyses.Noise.Fidelity_One()
-    # noise.geometry = vehicle
-    # analyses.append(noise)
 
     # ------------------------------------------------------------------
     #  Planet Analysis
@@ -684,17 +681,22 @@ def save_results_as_csv(results, profile_id=0):
 
 if __name__ == '__main__':
     start_time = time.time()
-    all_UTM_data_df = pd.read_csv('./logs/all_UTM_sim_data.csv')
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
     N = all_UTM_data_df.shape[0]
     num_thread = 48
     num_sample_in_thread = N//num_thread
     all_threads = [None]*num_thread
+    num_completed_thread = 0
     for i in range(num_thread):
         start_indx = i*num_sample_in_thread
         end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
+        # main(start_indx, end_indx)
         all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
         all_threads[i].start()
-        all_threads[i].join()
+        # all_threads[i].join()
+    while num_completed_thread != num_thread:
+        time.sleep(30)
     
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time))

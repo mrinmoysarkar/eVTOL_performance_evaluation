@@ -129,3 +129,6 @@ dmypy.json
 .pyre/
 *.json
 *.csv
+dataset.zip
+dataset/
+logs/all_trajectories.zip
