@@ -33,7 +33,7 @@ The generated dataset from this simulation experiments can be found in the follo
 
 2. All Trajectory dataset: https://drive.google.com/drive/folders/1ty6J5D5wq1vYP6bS8z8jRp9wJTfxeykZ?usp=sharing 
     
-   Folder Name: all_trajectories
+   File Name: all_trajectories.zip
 
 3. eVTOL performance dataset: https://drive.google.com/drive/folders/1ty6J5D5wq1vYP6bS8z8jRp9wJTfxeykZ?usp=sharing
    
