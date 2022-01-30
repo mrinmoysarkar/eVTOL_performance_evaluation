@@ -1,8 +1,0 @@
-## @defgroup Methods-Center_of_Gravity Center_of_Gravity
-# Description
-# @ingroup Methods
-
-from .compute_component_centers_of_gravity import compute_component_centers_of_gravity
-from .compute_mission_center_of_gravity import compute_mission_center_of_gravity
-from .compute_fuel_center_of_gravity_longitudinal_range import compute_fuel_center_of_gravity_longitudinal_range
-
