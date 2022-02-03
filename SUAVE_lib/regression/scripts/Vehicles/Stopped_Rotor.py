@@ -584,12 +584,12 @@ def vehicle_setup():
     propeller.design_thrust          = (Drag*2.5)/net.number_of_propeller_engines
     propeller.variable_pitch         = True
 
-    propeller.airfoil_geometry       =  ['../Vehicles/Airfoils/NACA_4412.txt']
-    propeller.airfoil_polars         = [['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
+    propeller.airfoil_geometry       =  ['./SUAVE_lib/regression/scripts/Vehicles/Airfoils/NACA_4412.txt']
+    propeller.airfoil_polars         = [['./SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
 
     propeller.airfoil_polar_stations = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     propeller                        = propeller_design(propeller)
@@ -610,12 +610,12 @@ def vehicle_setup():
     lift_rotor.design_thrust              = Hover_Load/(net.number_of_lift_rotor_engines-1) # contingency for one-engine-inoperative condition
     lift_rotor.variable_pitch             = True
 
-    lift_rotor.airfoil_geometry           =  ['../Vehicles/Airfoils/NACA_4412.txt']
-    lift_rotor.airfoil_polars             = [['../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
-                                         '../Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
+    lift_rotor.airfoil_geometry           =  ['./SUAVE_lib/regression/scripts/Vehicles/Airfoils/NACA_4412.txt']
+    lift_rotor.airfoil_polars             = [['./SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_50000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_100000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_200000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_500000.txt' ,
+                                         './SUAVE_lib/regression/scripts/Vehicles/Airfoils/Polars/NACA_4412_polar_Re_1000000.txt' ]]
 
     lift_rotor.airfoil_polar_stations     = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     lift_rotor                            = propeller_design(lift_rotor)
