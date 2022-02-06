@@ -72,7 +72,7 @@ def main(start_indx, end_indx):
             print(time.time()-start_time_tj, start_indx, end_indx)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time))
-    # num_completed_thread += 1
+    num_completed_thread += 1
 
 
 
@@ -1123,27 +1123,27 @@ def save_results_as_csv(results, profile_id=0):
     
 
 if __name__ == '__main__':
-    main(0,1)
-    plt.show(block=True)
-    # start_time = time.time()
-    # all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
-    # all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
-    # N = all_UTM_data_df.shape[0]
-    # num_thread = 48
-    # num_sample_in_thread = N//num_thread
-    # all_threads = [None]*num_thread
-    # num_completed_thread = 0
-    # for i in range(num_thread):
-    #     start_indx = i*num_sample_in_thread
-    #     end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
-    #     # main(start_indx, end_indx)
-    #     all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
-    #     all_threads[i].start()
-    #     # all_threads[i].join()
-    # while num_completed_thread != num_thread:
-    #     time.sleep(30)
+    # main(0,1)
+    # plt.show(block=True)
+    start_time = time.time()
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
+    N = all_UTM_data_df.shape[0]
+    num_thread = 2
+    num_sample_in_thread = N//num_thread
+    all_threads = [None]*num_thread
+    num_completed_thread = 0
+    for i in range(num_thread):
+        start_indx = i*num_sample_in_thread
+        end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
+        # main(start_indx, end_indx)
+        all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
+        all_threads[i].start()
+        # all_threads[i].join()
+    while num_completed_thread != num_thread:
+        time.sleep(30)
     
-    # end_time = time.time()
-    # print("Total Analysis Time: {}s".format(end_time-start_time))
+    end_time = time.time()
+    print("Total Analysis Time: {}s".format(end_time-start_time))
     
     
