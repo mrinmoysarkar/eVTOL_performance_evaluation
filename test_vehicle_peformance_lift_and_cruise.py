@@ -34,7 +34,7 @@ from Stopped_Rotor import vehicle_setup, configs_setup
 # ----------------------------------------------------------------------
 
 def main(start_indx, end_indx):
-    global num_completed_thread
+    # global num_completed_thread
     start_time = time.time()
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
@@ -42,6 +42,13 @@ def main(start_indx, end_indx):
     for row_id in range(start_indx, end_indx):
         agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
         eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
+
+
+        base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
+        if os.path.exists(base_path):
+            print("profile {} exists!!!".format(agent_id))
+            continue
+
         if eVTOL_type == 'lift_and_cruse':
             start_time_tj = time.time()
             trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
@@ -65,17 +72,14 @@ def main(start_indx, end_indx):
             results   = mission.evaluate()
 
             # plot results
-            plot_mission(results,configs.base)
+            # plot_mission(results,configs.base)
             ######
             save_results(results, profile_id=agent_id)
             # save_results_as_csv(results, agent_id)
-            print(time.time()-start_time_tj, start_indx, end_indx)
-    end_time = time.time()
-    print("Total Analysis Time: {}s".format(end_time-start_time))
-    num_completed_thread += 1
-
-
-
+            print(time.time()-start_time_tj, start_indx, end_indx, row_id)
+    # end_time = time.time()
+    # print("Total Analysis Time in a thread: {}s".format(end_time-start_time))
+    # num_completed_thread += 1
 
 def compress_trajectory(tj):
     x1 = tj[0,0]
@@ -126,7 +130,7 @@ def full_setup(profile_id, tj):
     configs_analyses = analyses_setup(configs)
 
     # mission analyses
-    mission           = mission_setup(configs_analyses,vehicle, tj, profile_id)
+    mission           = mission_setup(configs_analyses, vehicle, tj, profile_id)
     missions_analyses = missions_setup(mission)
 
     analyses = SUAVE.Analyses.Analysis.Container()
@@ -149,7 +153,6 @@ def analyses_setup(configs):
         analyses[tag] = analysis
 
     return analyses
-
 
 def base_analysis(vehicle):
 
@@ -202,8 +205,6 @@ def base_analysis(vehicle):
     analyses.append(atmosphere)
 
     return analyses
-
-
 
 def mission_setup(analyses,vehicle,tj,profile_id):
     
@@ -589,9 +590,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     base_path = "./logs/profiles_eval/"
     profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
     
-    return mission
-    
-
+    return mission 
 
 def missions_setup(base_mission):
 
@@ -906,9 +905,7 @@ def save_results(results, profile_id=0):
     
     base_path = "./logs/profiles_eval/"
     profile_df.to_csv(base_path+"profile_electric_motor_and_propeller_efficiencies_"+str(profile_id)+'.csv', index=False)
-    
-    
-    
+      
 
 def save_results_as_csv(results, profile_id=0):
     labels = results.segments.keys()
@@ -1123,27 +1120,31 @@ def save_results_as_csv(results, profile_id=0):
     
 
 if __name__ == '__main__':
-    main(0,1)
-    plt.show(block=True)
-    # start_time = time.time()
-    # all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
-    # all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
-    # N = all_UTM_data_df.shape[0]
-    # num_thread = 2
+    # main(0,1)
+    # plt.show(block=True)
+    start_time = time.time()
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
+    N = all_UTM_data_df.shape[0] #total N is 9000
+    print(N)
+    main(0,N) #N is 9000 which is not correct
+    
+    # num_thread = 48
     # num_sample_in_thread = N//num_thread
     # all_threads = [None]*num_thread
     # num_completed_thread = 0
-    # for i in range(num_thread):
-    #     start_indx = i*num_sample_in_thread
-    #     end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
-    #     # main(start_indx, end_indx)
-    #     all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
-    #     all_threads[i].start()
-    #     # all_threads[i].join()
-    # while num_completed_thread != num_thread:
-    #     time.sleep(30)
-    
-    # end_time = time.time()
-    # print("Total Analysis Time: {}s".format(end_time-start_time))
+    '''
+    for i in range(num_thread):
+        start_indx = i*num_sample_in_thread
+        end_indx = (i+1)*num_sample_in_thread if i+1 != num_thread else N
+        # main(start_indx, end_indx)
+        all_threads[i] = threading.Thread(target=main, args=(start_indx, end_indx,))
+        all_threads[i].start()
+        # all_threads[i].join()
+    while num_completed_thread != num_thread:
+        time.sleep(30)
+    '''
+    end_time = time.time()
+    print("Total Analysis Time: {}s".format(end_time-start_time))
     
     

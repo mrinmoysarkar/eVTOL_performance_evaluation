@@ -42,6 +42,12 @@ def main(start_indx, end_indx):
     for row_id in range(start_indx, end_indx):
         agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
         eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
+
+        base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
+        if os.path.exists(base_path):
+            print("profile {} exists!!!".format(agent_id))
+            continue
+
         if eVTOL_type == 'vector_thrust':
             start_time_tj = time.time()
             trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
@@ -64,7 +70,7 @@ def main(start_indx, end_indx):
             ###
             save_results(results, profile_id=agent_id)
             
-            print(time.time()-start_time_tj, start_indx, end_indx)
+            print(time.time()-start_time_tj, start_indx, end_indx, row_id)
     end_time = time.time()
     print("Total Analysis Time in a thread: {}s".format(end_time-start_time))
    
@@ -118,7 +124,7 @@ def full_setup(profile_id, tj):
     configs_analyses = analyses_setup(configs)
 
     # mission analyses
-    mission           = mission_setup(configs_analyses,vehicle, tj, profile_id)
+    mission           = mission_setup(configs_analyses, vehicle, tj, profile_id)
     missions_analyses = missions_setup(mission)
 
     analyses = SUAVE.Analyses.Analysis.Container()
@@ -318,7 +324,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # ------------------------------------------------------------------
     segment                                            = Segments.Climb.Constant_Speed_Constant_Rate(base_segment)
     segment.tag                                        = "second_climb"
-    segment.analyses.extend( analyses.base )
+    segment.analyses.extend( analyses.cruise )
     segment.air_speed                                  = get_random_num(.9, 1.1)*Vstall
     segment.altitude_start                             = 50.0 * Units.ft
     segment.altitude_end                               = 300. * Units.ft
@@ -345,7 +351,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # ------------------------------------------------------------------
     segment                                            = Segments.Cruise.Constant_Speed_Constant_Altitude_Loiter(base_segment)
     segment.tag                                        = "departure_terminal_procedures"
-    segment.analyses.extend( analyses.base )
+    segment.analyses.extend( analyses.cruise )
     segment.altitude                                   = 300.0 * Units.ft
     segment.time                                       = get_random_num(0.7, 1.)*60.   * Units.second
     segment.air_speed                                  = get_random_num(0.95, 1.2)*Vstall
@@ -394,7 +400,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
 
     segment                                            = Segments.Climb.Constant_Speed_Constant_Rate(base_segment)
     segment.tag                                        = "accel_climb"
-    segment.analyses.extend( analyses.base )
+    segment.analyses.extend( analyses.cruise )
     segment.air_speed                                  = get_random_num(0.95, 1.2)*Vstall
     segment.altitude_start                             = 300.0 * Units.ft
     segment.altitude_end                               = 1500. * Units.ft
@@ -427,14 +433,16 @@ def mission_setup(analyses,vehicle,tj,profile_id):
         # ------------------------------------------------------------------  
         segment                                            = Segments.Cruise.Constant_Speed_Constant_Altitude(base_segment)
         segment.tag                                        = "cruise_"+str(i)
-        segment.analyses.extend( analyses.base ) 
+        segment.analyses.extend( analyses.cruise ) 
         segment.altitude                                   = 1500.0 * Units.ft
-        segment.air_speed                                  = min(speed, 49.1744) * Units['m/s'] #110.   * Units['mph']
-        segment.distance                                   = total_t * speed * Units['m'] #50.    * Units.miles     
-        segment.state.unknowns.throttle                    = 0.80 * ones_row(1) 
+        segment.air_speed                                  =((speed/80.0) * 49.1744) * Units['m/s'] #110.   * Units['mph']
+        segment.distance                                   = total_t * speed * Units['m'] #50.    * Units.miles   
+        # print("speed::::::::::::::::: {} distance {}".format(speed, total_t * speed))  
+        segment.state.unknowns.throttle                    = 0.95 * ones_row(1) 
         segment.process.iterate.conditions.stability       = SUAVE.Methods.skip
         segment.process.finalize.post_process.stability    = SUAVE.Methods.skip
         segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
+
         
         # add to misison
         mission.append_segment(segment)
@@ -449,6 +457,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
         speed_spec.append(segment.air_speed)
         time_required.append(total_t)
         # print("speed {}, time {}".format(speed, total_t))
+        # if True:
+        #     break
     
     # ------------------------------------------------------------------
     #   Decelerated Descend
@@ -460,7 +470,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.altitude_end                               = 300. * Units.ft
     segment.descent_rate                               = 500. * Units['ft/min']
     segment.air_speed                                  = get_random_num(0.95, 1.2) * Vstall
-    segment.state.unknowns.throttle                  = 0.90    *  ones_row(1)
+    segment.state.unknowns.throttle                    = 0.90    *  ones_row(1)
     segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
 
     # add to misison
@@ -487,8 +497,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.time                                       = get_random_num(0.7, 1.)*60.   * Units.second
     segment.air_speed                                  = get_random_num(0.95, 1.2)*Vstall
     segment.state.unknowns.throttle                    =  0.80 * ones_row(1)
-    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment,\
-                                                                                         initial_power_coefficient = 0.03)
+    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)#,\
+                                                                                         #initial_power_coefficient = 0.03)
 
     # add to misison
     mission.append_segment(segment)
@@ -514,7 +524,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.altitude_end                            = 50.0 * Units.ft
     segment.air_speed                               = get_random_num(.9, 1.1) * Vstall
     segment.descent_rate                            = 500. * Units['ft/min'] 
-    segment.state.unknowns.throttle                 =  0.80 * ones_row(1)
+    segment.state.unknowns.throttle                 =  0.85 * ones_row(1)
     segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
     
     # add to misison
@@ -562,16 +572,17 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # ------------------------------------------------------------------
     segment                                            = Segments.Hover.Descent(base_segment)  
     segment.tag                                        = "hover_descent"
-    segment.analyses.extend( analyses.base )
+    segment.analyses.extend( analyses.hover_descent )
     segment.altitude_start                             = 50.    * Units.ft    
     segment.altitude_end                               = 0.0  * Units.ft  
     segment.descent_rate                               = get_random_num(.7, 1.)*300.  * Units['ft/min']
-    segment.process.iterate.unknowns.mission           = SUAVE.Methods.skip
-    segment.process.iterate.conditions.stability       = SUAVE.Methods.skip
-    segment.process.finalize.post_process.stability    = SUAVE.Methods.skip
-    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment,\
-                                                                                         initial_power_coefficient = 0.06)
-    
+    # segment.state.unknowns.throttle                    = 0.95    *  ones_row(1)
+    # segment.process.iterate.unknowns.mission           = SUAVE.Methods.skip
+    # segment.process.iterate.conditions.stability       = SUAVE.Methods.skip
+    # segment.process.finalize.post_process.stability    = SUAVE.Methods.skip
+    # segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment,\
+    #                                                                                      initial_power_coefficient = 0.06)
+    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
 
     # add to misison
     mission.append_segment(segment)
@@ -599,6 +610,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     
     base_path = "./logs/profiles_eval/"
     profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
+
+
     
     return mission
 
@@ -931,7 +944,7 @@ if __name__ == '__main__':
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='vector_thrust']
     N = all_UTM_data_df.shape[0]
-    main(1500,2000)
+    main(6000,6500)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time)) 
 
