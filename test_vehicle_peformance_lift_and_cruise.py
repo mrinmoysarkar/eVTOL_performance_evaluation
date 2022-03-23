@@ -40,43 +40,46 @@ def main(start_indx, end_indx):
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
     input_path = './logs/sampled_trajectories/'
     for row_id in range(start_indx, end_indx):
-        agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
-        eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
+        try:
+            agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
+            eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
 
 
-        base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
-        if os.path.exists(base_path):
-            print("profile {} exists!!!".format(agent_id))
-            continue
+            base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
+            if os.path.exists(base_path):
+                print("profile {} exists!!!".format(agent_id))
+                continue
 
-        if eVTOL_type == 'lift_and_cruse':
-            start_time_tj = time.time()
-            trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
-            tj = trajectory_data.values
-            tj = compress_trajectory(tj)
-            
-            # # build the vehicle, configs, and analyses
-            # configs, analyses = full_setup(agent_id,tj)
-            # analyses.finalize()
-            # # evaluate mission
-            # mission   = analyses.mission
-            # results   = mission.evaluate()
-            
-            #######
-            # build the vehicle, configs, and analyses
-            configs, analyses = full_setup(agent_id, tj)
-            configs.finalize()
-            analyses.finalize()
-            # evaluate mission
-            mission   = analyses.missions.base
-            results   = mission.evaluate()
+            if eVTOL_type == 'lift_and_cruse':
+                start_time_tj = time.time()
+                trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
+                tj = trajectory_data.values
+                tj = compress_trajectory(tj)
+                
+                # # build the vehicle, configs, and analyses
+                # configs, analyses = full_setup(agent_id,tj)
+                # analyses.finalize()
+                # # evaluate mission
+                # mission   = analyses.mission
+                # results   = mission.evaluate()
+                
+                #######
+                # build the vehicle, configs, and analyses
+                configs, analyses = full_setup(agent_id, tj)
+                configs.finalize()
+                analyses.finalize()
+                # evaluate mission
+                mission   = analyses.missions.base
+                results   = mission.evaluate()
 
-            # plot results
-            # plot_mission(results,configs.base)
-            ######
-            save_results(results, profile_id=agent_id)
-            # save_results_as_csv(results, agent_id)
-            print(time.time()-start_time_tj, start_indx, end_indx, row_id)
+                # plot results
+                # plot_mission(results,configs.base)
+                ######
+                save_results(results, profile_id=agent_id)
+                # save_results_as_csv(results, agent_id)
+                print(time.time()-start_time_tj, start_indx, end_indx, row_id)
+        except:
+            print("ERROR IN PROFILE !!!")
     # end_time = time.time()
     # print("Total Analysis Time in a thread: {}s".format(end_time-start_time))
     # num_completed_thread += 1
