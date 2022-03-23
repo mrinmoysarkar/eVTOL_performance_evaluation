@@ -39,7 +39,7 @@ class sample_from_UTM_DB:
                         if df.shape[0] != 0: 
                             if df.shape[0] < mi:
                                 mi = df.shape[0]
-                            print(sim, eV, algo, loc)
+                            print(sim, eV, algo, loc, df.shape[0])
                             df = df.sample(n=num_samples)
                             if sampled_dataset is None:
                                 sampled_dataset = deepcopy(df)

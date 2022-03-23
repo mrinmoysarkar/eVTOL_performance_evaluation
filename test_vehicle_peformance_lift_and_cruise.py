@@ -1123,7 +1123,7 @@ if __name__ == '__main__':
     start_time = time.time()
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
-    N = 1#all_UTM_data_df.shape[0] #total N is 9000
+    N = all_UTM_data_df.shape[0] #total N is 9000
     print(N)
     main(0,N) #N is 9000 which is not correct
     end_time = time.time()
