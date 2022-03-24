@@ -53,7 +53,7 @@ def main(start_indx, end_indx):
                 start_time_tj = time.time()
                 trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
                 tj = trajectory_data.values
-                tj = compress_trajectory(tj)
+                tj = compress_trajectory_v1(tj)
                 
                 # build the vehicle, configs, and analyses
                 configs, analyses = full_setup(agent_id, tj)
@@ -76,7 +76,24 @@ def main(start_indx, end_indx):
             print("ERROR IN PROFILE !!!")
     end_time = time.time()
     print("Total Analysis Time in a thread: {}s".format(end_time-start_time))
-   
+
+
+def compress_trajectory_v1(tj):
+    N = tj.shape[0]
+    prev_speed = np.linalg.norm(tj[0,2:4])
+    new_tj = []
+    new_tj.append(tj[0,:])
+    for i in range(1,N):
+        if tj[i-1,4] > tj[i,4]:
+            break
+        cur_speed = np.linalg.norm(tj[i,2:4])
+        err_speed = abs(cur_speed - prev_speed)
+        if i+1 != N and err_speed < 2.0:
+            pass
+        else:
+            new_tj.append(tj[i,:])
+        prev_speed = cur_speed
+    return np.array(new_tj)   
 
 def compress_trajectory(tj):
     x1 = tj[0,0]

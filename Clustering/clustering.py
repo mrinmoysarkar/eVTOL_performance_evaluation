@@ -23,7 +23,10 @@ if __name__ == '__main__':
     if folder_regular[:-1] not in os.listdir(output_path):
         os.mkdir(os.path.join(output_path,folder_regular))
     # Read the data from csv file and extract the configureation information
-    all_data = pd.read_csv('all_UTM_sim_data.csv')
+    data_part1 = pd.read_csv('all_UTM_sim_data_part1.csv')
+    data_part2 = pd.read_csv('all_UTM_sim_data_part2.csv')
+    # all_data = pd.read_csv('all_UTM_sim_data.csv')
+    all_data = pd.concat([data_part1, data_part2], ignore_index=True)
     types_evtol = np.unique(all_data['eVTOL_type'].values)
     types_sim = np.unique(all_data['simulation_type'].values)
     types_algo = np.unique(all_data['algorithm_type'].values)
