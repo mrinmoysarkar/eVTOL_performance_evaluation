@@ -215,7 +215,8 @@ def vehicle_setup():
     #------------------------------------------------------------------
     # Design Battery
     #------------------------------------------------------------------ 
-    bat = SUAVE.Components.Energy.Storages.Batteries.Constant_Mass.Lithium_Ion_LiNiMnCoO2_18650()
+    # bat = SUAVE.Components.Energy.Storages.Batteries.Constant_Mass.Lithium_Ion_LiNiMnCoO2_18650()
+    bat = SUAVE.Components.Energy.Storages.Batteries.Constant_Mass.Lithium_Ion()
     bat.mass_properties.mass = 300. * Units.kg  
     bat.max_voltage          = net.voltage  
     initialize_from_mass(bat)
@@ -238,7 +239,7 @@ def vehicle_setup():
     lift_rotor.freestream_velocity    = 10.0
     lift_rotor.angular_velocity       = (design_tip_mach*speed_of_sound)/lift_rotor.tip_radius   
     lift_rotor.design_Cl              = 0.7
-    lift_rotor.design_altitude        = 1000 * Units.feet                   
+    lift_rotor.design_altitude        = 1500 * Units.feet                   
     lift_rotor.design_thrust          = Hover_Load/(net.number_of_propeller_engines-1) # contingency for one-engine-inoperative condition
 
     lift_rotor.airfoil_geometry       = ['./SUAVE_lib/regression/scripts/Vehicles/Airfoils/NACA_4412.txt'] 

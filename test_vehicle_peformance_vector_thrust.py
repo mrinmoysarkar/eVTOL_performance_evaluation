@@ -114,7 +114,7 @@ def compress_trajectory(tj):
         cur_speed = np.linalg.norm(tj[i,2:4])
         err_speed = abs(cur_speed - prev_speed)
         err = abs(y2 - (m*x2+c))
-        if err < 10e-9 and i+1 != N and err_speed < 10e-9:
+        if err < 100 and i+1 != N and err_speed < 1.0:
             pass
         else:
             new_tj.append(tj[i,:])
