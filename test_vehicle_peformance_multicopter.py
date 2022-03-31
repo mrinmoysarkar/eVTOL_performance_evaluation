@@ -39,45 +39,60 @@ def main(start_indx, end_indx):
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='multicopter']
     input_path = './logs/sampled_trajectories/'
     for row_id in range(start_indx, end_indx):
-        try:
-            agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
-            eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
-    
-            base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
-            if os.path.exists(base_path):
-                print("profile {} exists!!!".format(agent_id))
-                continue
+        # try:
+        agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
+        eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
+
+        base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
+        if os.path.exists(base_path):
+            print("profile {} exists!!!".format(agent_id))
+            # continue
+            pass
+        
+        if eVTOL_type == 'multicopter':
+            start_time_tj = time.time()
+            trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
+            tj = trajectory_data.values
+            tj = compress_trajectory_v1(tj)
             
-            if eVTOL_type == 'multicopter':
-                start_time_tj = time.time()
-                trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
-                tj = trajectory_data.values
-                tj = compress_trajectory(tj)
-                
-                # build the vehicle, configs, and analyses
-                configs, analyses = full_setup(agent_id, tj)
-                analyses.finalize()
-                # evaluate mission
-                mission   = analyses.missions.base
-                results   = mission.evaluate()
-    
-    
-                # Plot vehicle 
-                # plot_vehicle(configs.cruise, save_figure = False, plot_control_points = False)
-    
-                # plot results
-                # plot_mission(results)
-                ###
-                save_results(results, profile_id=agent_id)
-                
-                print(time.time()-start_time_tj, start_indx, end_indx, row_id)
-        except:
-            print("ERROR IN PROFILE !!!")
+            # build the vehicle, configs, and analyses
+            configs, analyses = full_setup(agent_id, tj)
+            analyses.finalize()
+            # evaluate mission
+            mission   = analyses.missions.base
+            results   = mission.evaluate()
+
+
+            # Plot vehicle 
+            # plot_vehicle(configs.cruise, save_figure = False, plot_control_points = False)
+
+            # plot results
+            # plot_mission(results)
+            ###
+            save_results(results, profile_id=agent_id)
+            
+            print(time.time()-start_time_tj, start_indx, end_indx, row_id)
+        # except:
+        #     print("ERROR IN PROFILE !!!")
         
     
 
-
-
+def compress_trajectory_v1(tj):
+    N = tj.shape[0]
+    prev_speed = np.linalg.norm(tj[0,2:4])
+    new_tj = []
+    new_tj.append(tj[0,:])
+    for i in range(1,N):
+        if tj[i-1,4] > tj[i,4]:
+            break
+        cur_speed = np.linalg.norm(tj[i,2:4])
+        err_speed = abs(cur_speed - prev_speed)
+        if i+1 != N and err_speed < 2.0:
+            pass
+        else:
+            new_tj.append(tj[i,:])
+        prev_speed = cur_speed
+    return np.array(new_tj)  
 
 def compress_trajectory(tj):
     x1 = tj[0,0]
@@ -230,7 +245,7 @@ def configs_setup(vehicle):
     # ------------------------------------------------------------------
     config = SUAVE.Components.Configs.Config(base_config)
     config.tag = 'cruise'
-    config.networks.battery_propeller.pitch_command            = 10.  * Units.degrees
+    config.networks.battery_propeller.pitch_command            = 20.  * Units.degrees
     configs.append(config)
 
     return configs
@@ -266,7 +281,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # base segment
     base_segment                                             = Segments.Segment()
     ones_row                                                 = base_segment.state.ones_row
-    base_segment.state.numerics.number_control_points        = 4
+    base_segment.state.numerics.number_control_points        = 8
     base_segment.process.iterate.initials.initialize_battery = SUAVE.Methods.Missions.Segments.Common.Energy.initialize_battery
     base_segment.process.iterate.conditions.planet_position  = SUAVE.Methods.skip
 
@@ -283,31 +298,31 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # ------------------------------------------------------------------
     #   takeoff
     # ------------------------------------------------------------------
-    segment     = Segments.Hover.Climb(base_segment)
-    segment.tag = "hover_climb"
-    segment.analyses.extend( analyses.climb )
-    segment.altitude_start                                   = 0.0  * Units.ft
-    segment.altitude_end                                     = 1500.  * Units.ft
-    segment.climb_rate                                       = get_random_num(.7, 1.) * 500. * Units['ft/min']
-    segment.battery_energy                                   = vehicle.networks.battery_propeller.battery.max_energy
-    segment.state.unknowns.throttle                          = 0.9 * ones_row(1)
-    # segment.process.iterate.unknowns.mission                 = SUAVE.Methods.skip
-    segment.process.iterate.conditions.stability             = SUAVE.Methods.skip
-    segment.process.finalize.post_process.stability          = SUAVE.Methods.skip
-    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment,\
-                                                                                          initial_power_coefficient = 0.01)
-    # add to misison
-    mission.append_segment(segment)
+    # segment     = Segments.Hover.Climb(base_segment)
+    # segment.tag = "hover_climb"
+    # segment.analyses.extend( analyses.climb )
+    # segment.altitude_start                                   = 0.0  * Units.ft
+    # segment.altitude_end                                     = 500.  * Units.ft
+    # segment.climb_rate                                       = get_random_num(.7, 1.) * 500. * Units['ft/min']
+    # segment.battery_energy                                   = vehicle.networks.battery_propeller.battery.max_energy
+    # segment.state.unknowns.throttle                          = 0.9 * ones_row(1)
+    # # segment.process.iterate.unknowns.mission                 = SUAVE.Methods.skip
+    # segment.process.iterate.conditions.stability             = SUAVE.Methods.skip
+    # segment.process.finalize.post_process.stability          = SUAVE.Methods.skip
+    # segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment,\
+    #                                                                                       initial_power_coefficient = 0.01)
+    # # add to misison
+    # mission.append_segment(segment)
     
-    segment_type.append(segment.tag)
-    climb_rate.append(segment.climb_rate)
-    descend_rate.append(np.nan)
-    start_altitude.append(segment.altitude_start)
-    end_altitude.append(segment.altitude_end )
-    climb_angle.append(np.nan)
-    descent_angle.append(np.nan)
-    speed_spec.append(np.nan)
-    time_required.append(np.nan)
+    # segment_type.append(segment.tag)
+    # climb_rate.append(segment.climb_rate)
+    # descend_rate.append(np.nan)
+    # start_altitude.append(segment.altitude_start)
+    # end_altitude.append(segment.altitude_end )
+    # climb_angle.append(np.nan)
+    # descent_angle.append(np.nan)
+    # speed_spec.append(np.nan)
+    # time_required.append(np.nan)
 
     
     
@@ -323,15 +338,16 @@ def mission_setup(analyses,vehicle,tj,profile_id):
         # ------------------------------------------------------------------
         segment                                            = Segments.Cruise.Constant_Speed_Constant_Altitude(base_segment)
         segment.tag                                        = "cruise_"+str(i)
-        segment.analyses.extend( analyses.base)
+        segment.analyses.extend( analyses.cruise)
+        segment.battery_energy                               = vehicle.networks.battery_propeller.battery.max_energy
         segment.altitude                                   = 1500.0 * Units.ft
-        segment.air_speed                                  = speed * Units['m/s'] #110.   * Units['mph']
-        segment.distance                                   = total_t * speed * Units['m'] #50.    * Units.miles   
+        # segment.air_speed                                  = 25.0 * Units['mph'] #speed * Units['m/s'] #110.   * Units['mph']
+        segment.distance                                   = 10.0 * Units.miles #total_t * speed * Units['m'] #50.    * Units.miles   
         # print("speed::::::::::::::::: {} distance {}".format(speed, total_t * speed)) 
-         
-        segment.state.unknowns.throttle                    = 0.95 * ones_row(1) 
-        segment.process.iterate.conditions.stability       = SUAVE.Methods.skip
-        segment.process.finalize.post_process.stability    = SUAVE.Methods.skip
+        # segment.process.iterate.unknowns.mission           = SUAVE.Methods.skip
+        # segment.state.unknowns.throttle                    = 0.95 * ones_row(1) 
+        # segment.process.iterate.conditions.stability       = SUAVE.Methods.skip
+        # segment.process.finalize.post_process.stability    = SUAVE.Methods.skip
         segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
     
         # add to misison
@@ -355,45 +371,45 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     # ------------------------------------------------------------------
     #   Land
     # ------------------------------------------------------------------
-    segment                                            = Segments.Hover.Descent(base_segment)  
-    segment.tag                                        = "hover_descent"
-    segment.analyses.extend( analyses.base )
+    # segment                                            = Segments.Hover.Descent(base_segment)  
+    # segment.tag                                        = "hover_descent"
+    # segment.analyses.extend( analyses.base )
     
-    segment.altitude_start            = 1500.    * Units.ft    
-    segment.altitude_end              = 0.0  * Units.ft  
-    segment.descent_rate   = get_random_num(0.9, 1.) * 300. * Units['ft/min']
-    segment.state.unknowns.throttle                          = 0.9 * ones_row(1)
-    # segment.process.iterate.unknowns.mission                 = SUAVE.Methods.skip
-    segment.process.iterate.conditions.stability             = SUAVE.Methods.skip
-    segment.process.finalize.post_process.stability          = SUAVE.Methods.skip
-    segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment, initial_power_coefficient = 0.03)
+    # segment.altitude_start            = 1500.    * Units.ft    
+    # segment.altitude_end              = 0.0  * Units.ft  
+    # segment.descent_rate   = get_random_num(0.9, 1.) * 300. * Units['ft/min']
+    # segment.state.unknowns.throttle                          = 0.9 * ones_row(1)
+    # # segment.process.iterate.unknowns.mission                 = SUAVE.Methods.skip
+    # segment.process.iterate.conditions.stability             = SUAVE.Methods.skip
+    # segment.process.finalize.post_process.stability          = SUAVE.Methods.skip
+    # segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment, initial_power_coefficient = 0.03)
 
-    # add to misison
-    mission.append_segment(segment)
+    # # add to misison
+    # mission.append_segment(segment)
     
-    segment_type.append(segment.tag)
-    climb_rate.append(np.nan)
-    descend_rate.append(segment.descent_rate)
-    start_altitude.append(segment.altitude_start)
-    end_altitude.append(segment.altitude_end)
-    climb_angle.append(np.nan)
-    descent_angle.append(np.nan)
-    speed_spec.append(np.nan)
-    time_required.append(np.nan)
+    # segment_type.append(segment.tag)
+    # climb_rate.append(np.nan)
+    # descend_rate.append(segment.descent_rate)
+    # start_altitude.append(segment.altitude_start)
+    # end_altitude.append(segment.altitude_end)
+    # climb_angle.append(np.nan)
+    # descent_angle.append(np.nan)
+    # speed_spec.append(np.nan)
+    # time_required.append(np.nan)
     
-    profile_spec_df = pd.DataFrame(data={'segment_type':segment_type,
-                                    'climb_rate':climb_rate,
-                                    'descend_rate':descend_rate,
-                                    'start_altitude':start_altitude,
-                                    'end_altitude':end_altitude,
-                                    'climb_angle':climb_angle,
-                                    'descent_angle':descent_angle,
-                                    'speed':speed_spec,
-                                    'time_required':time_required
-                                    })
+    # profile_spec_df = pd.DataFrame(data={'segment_type':segment_type,
+    #                                 'climb_rate':climb_rate,
+    #                                 'descend_rate':descend_rate,
+    #                                 'start_altitude':start_altitude,
+    #                                 'end_altitude':end_altitude,
+    #                                 'climb_angle':climb_angle,
+    #                                 'descent_angle':descent_angle,
+    #                                 'speed':speed_spec,
+    #                                 'time_required':time_required
+    #                                 })
     
-    base_path = "./logs/profiles_eval/"
-    profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
+    # base_path = "./logs/profiles_eval/"
+    # profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
 
     return mission
 
@@ -728,7 +744,7 @@ if __name__ == '__main__':
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='multicopter']
     N = all_UTM_data_df.shape[0]
     print(N)
-    main(0,100)
+    main(0,1)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time))
 
