@@ -16,12 +16,15 @@ if __name__ == '__main__':
     output_path = 'CLUSTERING/'
     folder_outlier = 'OUTLIER/'
     folder_regular = 'REGULAR/'
+    folder_plots = 'PLOTS/'
     if output_path[:-1] not in os.listdir():
             os.mkdir(output_path)
     if folder_outlier[:-1] not in os.listdir(output_path):
         os.mkdir(os.path.join(output_path,folder_outlier))
     if folder_regular[:-1] not in os.listdir(output_path):
         os.mkdir(os.path.join(output_path,folder_regular))
+    if folder_plots[:-1] not in os.listdir(output_path):
+        os.mkdir(os.path.join(output_path,folder_plots))
     # Read the data from csv file and extract the configureation information
     data_part1 = pd.read_csv('all_UTM_sim_data_part1.csv')
     data_part2 = pd.read_csv('all_UTM_sim_data_part2.csv')
@@ -75,6 +78,8 @@ if __name__ == '__main__':
     cluster_idx = cluster_idx.astype(int)
     count1, count2 = 1, 1
     cluster_idxs = np.unique(cluster_idx)
+    small_clusters, size_record, small_samples = [], [], []
+    density_record, radius_record = [], []
     for j in range(len(cluster_idxs)):
         cluster = np.where(cluster_idx == cluster_idxs[j])[0]
         clustering_info = all_data['agent_id'].iloc[cluster]
@@ -86,7 +91,32 @@ if __name__ == '__main__':
             clustering_filename = 'Regular_Cluster_' + str(count1) + '.csv'
             clustering_info.to_csv(output_path+folder_regular+clustering_filename, index = None)
             count1 += 1
-    
+            if len(cluster) < 10000:
+                small_clusters.append(cluster_idxs[j])
+                Dist = squareform(pdist(current_sample[cluster,:]))
+                cluster_radius, cluster_density, center_idx = density_cal(Dist, cluster)
+                density_record.append(cluster_density)
+                radius_record.append(cluster_radius)
+                size_record.append(len(cluster))
+                x, y =  current_sample[cluster,0], current_sample[cluster,1]
+                z, w =  current_sample[cluster,2], current_sample[cluster,3]
+                fig = plt.figure()
+                ax = plt.axes(projection='3d')
+                ax.scatter3D(x,y,z, s=10+w)
+                ax.set_xlabel('number_conflicts')
+                ax.set_ylabel('actual_ftime')
+                ax.set_zlabel('ideal_ftime')
+                plt.savefig(output_path+folder_plots+'Cluser_'+str(cluster_idxs[j])+'.png')
+    # Bar plot for the descriptive analysis on the cluster distributions
+    plt.figure()
+    fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row')
+    ax2[0].bar(small_clusters, radius_record)
+    ax2[0].set_xlabel('Cluster idx')
+    ax2[0].set_ylabel('Cluster radius')
+    ax2[1].bar(small_clusters, size_record)
+    ax2[1].set_xlabel('Cluster idx')
+    ax2[1].set_ylabel('Cluster size')
+    plt.savefig('Descriptive_Plot.png')
     
     
 
