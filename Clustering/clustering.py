@@ -107,6 +107,7 @@ if __name__ == '__main__':
                 ax.set_ylabel('actual_ftime')
                 ax.set_zlabel('ideal_ftime')
                 plt.savefig(output_path+folder_plots+'Cluser_'+str(cluster_idxs[j])+'.png')
+                plt.close()
     # Bar plot for the descriptive analysis on the cluster distributions
     plt.figure()
     fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row')
