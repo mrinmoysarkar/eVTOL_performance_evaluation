@@ -20,6 +20,9 @@ import pandas as pd
 import time
 import os
 import threading
+import multiprocessing
+from multiprocessing import Process, Lock
+import psutil
 
 sys.path.append('./SUAVE_lib/regression/scripts/Vehicles')
 sys.path.append('./uam_simulator')
@@ -34,7 +37,15 @@ from Tiltwing import vehicle_setup, configs_setup
 # ----------------------------------------------------------------------
 
 
-def main(start_indx, end_indx):
+def main(lock, start_indx, end_indx):
+    # lock.acquire()
+    # proc = psutil.Process()  # get self pid
+    # print(f'PID: {proc.pid}')
+    # aff = proc.cpu_affinity()
+    # print(f'Affinity before: {aff}')
+    # cpus = list(range(lock*4,(lock+1)*4))
+    # proc.cpu_affinity(cpus)
+
     start_time = time.time()
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='vector_thrust']
@@ -47,7 +58,8 @@ def main(start_indx, end_indx):
             base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
             if os.path.exists(base_path):
                 print("profile {} exists!!!".format(agent_id))
-                continue
+                # continue
+                pass
 
             if eVTOL_type == 'vector_thrust':
                 start_time_tj = time.time()
@@ -57,14 +69,18 @@ def main(start_indx, end_indx):
                 
                 # build the vehicle, configs, and analyses
                 configs, analyses = full_setup(agent_id, tj)
+                # Plot vehicle 
+                plot_vehicle(configs.cruise, save_figure=False, plot_control_points=False)
+                if True:
+                    return
+
                 configs.finalize()
                 analyses.finalize()
                 # evaluate mission
                 mission   = analyses.missions.base
                 results   = mission.evaluate()
 
-                # Plot vehicle 
-                # plot_vehicle(configs.cruise, save_figure = False, plot_control_points = False)
+                
 
                 # plot results
                 # plot_mission(results)
@@ -75,7 +91,10 @@ def main(start_indx, end_indx):
         except:
             print("ERROR IN PROFILE !!!")
     end_time = time.time()
-    print("Total Analysis Time in a thread: {}s".format(end_time-start_time))
+    print("Total Analysis Time in a thread: {}s {} {}".format(end_time-start_time, start_indx, end_indx))
+    # # lock.release()
+    # aff = proc.cpu_affinity()
+    # print(f'Affinity after: {aff}')
 
 
 def compress_trajectory_v1(tj):
@@ -544,7 +563,7 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.altitude_end                            = 50.0 * Units.ft
     segment.air_speed                               = get_random_num(.9, 1.1) * Vstall
     segment.descent_rate                            = 500. * Units['ft/min'] 
-    segment.state.unknowns.throttle                 =  0.85 * ones_row(1)
+    segment.state.unknowns.throttle                 =  0.90 * ones_row(1)
     segment = vehicle.networks.battery_propeller.add_unknowns_and_residuals_to_segment(segment)
     
     # add to misison
@@ -964,9 +983,27 @@ if __name__ == '__main__':
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='vector_thrust']
     N = all_UTM_data_df.shape[0]
-    main(1000,3000)
+    main(0, 1000,3000)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time)) 
 
-    # plt.show(block=True) 
+    plt.show(block=True) 
+
+    # tic = time.time()
+
+    # process_list = []
+    # start_idx = [0,500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500,7500,8000,8500]
+    # end_idx = [500,1000,1500,2000,2500,3000,3500,4000,4500,5000,5500,6000,6500,7500,8000,8500,9000]
+    # # lock = Lock()
+    # # n_cpus = psutil.cpu_count()
+    # for i in range(len(start_idx)):
+    #     # Process(target=main, args=(lock, start_idx[i], end_idx[i])).start()
+    #     p =  multiprocessing.Process(target=main, args = [i, start_idx[i], end_idx[i]])
+    #     p.start()
+    #     process_list.append(p)
+
+    # for process in process_list:
+    #     process.join()
+    # toc = time.time()
+    # print('Done in {:.4f} seconds'.format(toc-tic))
      

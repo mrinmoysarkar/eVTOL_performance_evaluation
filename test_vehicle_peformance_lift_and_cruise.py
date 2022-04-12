@@ -49,6 +49,7 @@ def main(start_indx, end_indx):
             if os.path.exists(base_path):
                 print("profile {} exists!!!".format(agent_id))
                 continue
+                
 
             if eVTOL_type == 'lift_and_cruse':
                 start_time_tj = time.time()
@@ -66,6 +67,9 @@ def main(start_indx, end_indx):
                 #######
                 # build the vehicle, configs, and analyses
                 configs, analyses = full_setup(agent_id, tj)
+                # Plot vehicle 
+                # plot_vehicle(configs.base, save_figure=False, plot_control_points=False)
+
                 configs.finalize()
                 analyses.finalize()
                 # evaluate mission
@@ -144,7 +148,7 @@ def full_setup(profile_id, tj):
     # vehicle data
     vehicle  = vehicle_setup()
     configs  = configs_setup(vehicle)
-    # plot_vehicle(vehicle,plot_control_points = False)
+    # plot_vehicle(vehicle, plot_control_points=True)
 
     # vehicle analyses
     configs_analyses = analyses_setup(configs)
@@ -350,8 +354,9 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.altitude_start                             = 60.0 * Units.ft
     segment.altitude_end                               = 300. * Units.ft
     segment.climb_rate                                 = 500. * Units['ft/min'] 
-    segment.state.unknowns.throttle                    =  0.80 * ones_row(1)
-    segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment)
+    segment.state.unknowns.throttle                    = 0.80 * ones_row(1)
+    segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment,\
+                                                                                          initial_prop_power_coefficient = 0.16)
     
     # add to misison
     mission.append_segment(segment)
@@ -438,8 +443,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
         segment.altitude                                 = 1500.0 * Units.ft
         segment.air_speed                                = speed * Units['m/s'] #110.   * Units['mph']
         segment.distance                                 = total_t * speed * Units['m'] #50.    * Units.miles     
-        segment.state.unknowns.throttle                  = 0.60 * ones_row(1) 
-        segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment)     
+        segment.state.unknowns.throttle                  = 0.90 * ones_row(1) 
+        segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment, initial_prop_power_coefficient = 0.16)  
         
         # add to misison
         mission.append_segment(segment)
@@ -492,9 +497,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
     segment.altitude                                   = 300.0 * Units.ft
     segment.time                                       = get_random_num(0.7, 1.)*60.   * Units.second
     segment.air_speed                                  = get_random_num(0.95, 1.2)*Vstall
-    segment.state.unknowns.throttle                    =  0.80 * ones_row(1)
-    segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment,\
-                                                                                           initial_prop_power_coefficient = 0.16)
+    segment.state.unknowns.throttle                    =  0.75 * ones_row(1)
+    segment = vehicle.networks.lift_cruise.add_cruise_unknowns_and_residuals_to_segment(segment)
 
     # add to misison
     mission.append_segment(segment)
