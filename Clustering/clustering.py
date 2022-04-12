@@ -10,7 +10,18 @@ import pandas as pd
 from sklearn.cluster import DBSCAN, MeanShift
 from sklearn.preprocessing import MinMaxScaler
 import os
+import matplotlib.pyplot as plt
+from mpl_toolkits import mplot3d
 
+def density_cal(Dist, current):
+    density = []
+    for si in range(len(current)):
+        temp_dist = Dist[si,:]
+        density.append(1/(1+np.sum(np.exp(-temp_dist))))
+    center_idx = np.argmax(density)
+    radius = np.mean(Dist)
+    max_density = np.max(density)
+    return radius, max_density, center_idx
 #--------------------------------------------------------------------------------------------------------------  
 if __name__ == '__main__':
     output_path = 'CLUSTERING/'
