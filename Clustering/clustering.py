@@ -9,9 +9,11 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN, MeanShift
 from sklearn.preprocessing import MinMaxScaler
+from scipy.spatial.distance import squareform, pdist
 import os
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
+
 
 def density_cal(Dist, current):
     density = []

@@ -58,8 +58,7 @@ def main(lock, start_indx, end_indx):
             base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
             if os.path.exists(base_path):
                 print("profile {} exists!!!".format(agent_id))
-                # continue
-                pass
+                continue
 
             if eVTOL_type == 'vector_thrust':
                 start_time_tj = time.time()
@@ -70,9 +69,8 @@ def main(lock, start_indx, end_indx):
                 # build the vehicle, configs, and analyses
                 configs, analyses = full_setup(agent_id, tj)
                 # Plot vehicle 
-                plot_vehicle(configs.cruise, save_figure=False, plot_control_points=False)
-                if True:
-                    return
+                # plot_vehicle(configs.cruise, save_figure=False, plot_control_points=False)
+                
 
                 configs.finalize()
                 analyses.finalize()
@@ -983,11 +981,11 @@ if __name__ == '__main__':
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='vector_thrust']
     N = all_UTM_data_df.shape[0]
-    main(0, 1000,3000)
+    main(0, 0,3000)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time)) 
 
-    plt.show(block=True) 
+    # plt.show(block=True) 
 
     # tic = time.time()
 
