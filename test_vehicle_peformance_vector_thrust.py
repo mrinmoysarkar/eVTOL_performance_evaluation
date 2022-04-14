@@ -981,7 +981,7 @@ if __name__ == '__main__':
     all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='vector_thrust']
     N = all_UTM_data_df.shape[0]
-    main(0, 6000,9000)
+    main(0, 0, N)
     end_time = time.time()
     print("Total Analysis Time: {}s".format(end_time-start_time)) 
 
