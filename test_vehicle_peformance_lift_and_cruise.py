@@ -46,11 +46,12 @@ def main(start_indx, end_indx):
 
 
             base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
-            if os.path.exists(base_path):
-                print("profile {} exists!!!".format(agent_id))
+            profile_spec_path = "./logs/profiles_eval/profile_spec_"+str(agent_id)+'.csv'
+            if os.path.exists(base_path) and os.path.exists(profile_spec_path):
+                # print("profile {} exists!!!".format(agent_id))
                 continue
                 
-
+            print("profile {} does not exists!!!".format(agent_id))
             if eVTOL_type == 'lift_and_cruse':
                 start_time_tj = time.time()
                 trajectory_data = pd.read_csv(input_path+'Trajectory_' + str(agent_id) + '.csv')
