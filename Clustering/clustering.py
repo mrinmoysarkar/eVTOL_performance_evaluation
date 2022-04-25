@@ -104,31 +104,31 @@ if __name__ == '__main__':
             clustering_filename = 'Regular_Cluster_' + str(count1) + '.csv'
             clustering_info.to_csv(output_path+folder_regular+clustering_filename, index = None)
             count1 += 1
-            if len(cluster) < 10000:
+            if len(cluster) <= 60000:
                 small_clusters.append(cluster_idxs[j])
                 Dist = squareform(pdist(current_sample[cluster,:]))
                 cluster_radius, cluster_density, center_idx = density_cal(Dist, cluster)
                 density_record.append(cluster_density)
                 radius_record.append(cluster_radius)
                 size_record.append(len(cluster))
-                x, y =  current_sample[cluster,0], current_sample[cluster,1]
-                z, w =  current_sample[cluster,2], current_sample[cluster,3]
-                fig = plt.figure()
-                ax = plt.axes(projection='3d')
-                ax.scatter3D(x,y,z, s=10+w)
-                ax.set_xlabel('number_conflicts')
-                ax.set_ylabel('actual_ftime')
-                ax.set_zlabel('ideal_ftime')
-                plt.savefig(output_path+folder_plots+'Cluser_'+str(cluster_idxs[j])+'.png')
-                plt.close()
+                # x, y =  current_sample[cluster,0], current_sample[cluster,1]
+                # z, w =  current_sample[cluster,2], current_sample[cluster,3]
+                # fig = plt.figure()
+                # ax = plt.axes(projection='3d')
+                # ax.scatter3D(x,y,z, s=10+w)
+                # ax.set_xlabel('number_conflicts')
+                # ax.set_ylabel('actual_ftime')
+                # ax.set_zlabel('ideal_ftime')
+                # plt.savefig(output_path+folder_plots+'Cluser_'+str(cluster_idxs[j])+'.png')
+                # plt.close()
     # Bar plot for the descriptive analysis on the cluster distributions
-    plt.figure()
+    plt.figure(figsize=(4,4), dpi=200)
     fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row')
     ax2[0].bar(small_clusters, radius_record)
-    ax2[0].set_xlabel('Cluster idx')
+    ax2[0].set_xlabel('Cluster id')
     ax2[0].set_ylabel('Cluster radius')
     ax2[1].bar(small_clusters, size_record)
-    ax2[1].set_xlabel('Cluster idx')
+    ax2[1].set_xlabel('Cluster id')
     ax2[1].set_ylabel('Cluster size')
     plt.savefig('Descriptive_Plot.png')
     

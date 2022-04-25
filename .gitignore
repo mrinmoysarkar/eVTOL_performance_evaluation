@@ -134,4 +134,14 @@ dataset.zip
 dataset/
 logs/all_trajectories.zip
 
+logs/profiles_eval_clustering/
+logs/profiles_eval_clustering_10k_dummy/
+logs/profiles_eval_clustering_10k_ori/
+logs/profiles_eval_clustering_10k_ori_copy (another copy)/
+logs/profiles_eval_clustering_10k_ori_copy (copy)/
+logs/profiles_eval_tiny/
+logs/sampled_trajectories_clustering/
+pickle_files/
+Untitled.ipynb
+
 .DS_Store

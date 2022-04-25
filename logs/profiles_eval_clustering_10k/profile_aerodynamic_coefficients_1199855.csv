@@ -1,0 +1,17 @@
+eVTOL_type,mission_segment,CL,CD,AOA_deg,L_D,time_min,fesibility
+multicopter,hover_climb,0.0,0.0,-90.0,,0.0,True
+multicopter,hover_climb,0.0,0.0,-90.0,,0.2108807810801228,True
+multicopter,hover_climb,0.0,0.0,-90.0,,0.8017555993445178,True
+multicopter,hover_climb,0.0,0.0,-90.0,,1.6555944504318345,True
+multicopter,hover_climb,0.0,0.0,-90.0,,2.6032840782379227,True
+multicopter,hover_climb,0.0,0.0,-90.0,,3.4571229293252395,True
+multicopter,hover_climb,0.0,0.0,-90.0,,4.047997747589635,True
+multicopter,hover_climb,0.0,0.0,-90.0,,4.258878528669758,True
+multicopter,hover_descent,0.0,0.0,90.0,,4.258878528669758,True
+multicopter,hover_descent,0.0,0.0,90.0,,4.510254135845245,True
+multicopter,hover_descent,0.0,0.0,90.0,,5.214592935451098,True
+multicopter,hover_descent,0.0,0.0,90.0,,6.232391990076878,True
+multicopter,hover_descent,0.0,0.0,90.0,,7.362063714467708,True
+multicopter,hover_descent,0.0,0.0,90.0,,8.379862769093489,True
+multicopter,hover_descent,0.0,0.0,90.0,,9.084201568699342,True
+multicopter,hover_descent,0.0,0.0,90.0,,9.335577175874828,True

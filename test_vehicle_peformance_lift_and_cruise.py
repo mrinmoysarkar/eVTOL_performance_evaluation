@@ -36,17 +36,24 @@ from Stopped_Rotor import vehicle_setup, configs_setup
 def main(start_indx, end_indx):
     # global num_completed_thread
     start_time = time.time()
-    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    # all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset_from_clusters.csv')
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
-    input_path = './logs/sampled_trajectories/'
+    # input_path = './logs/sampled_trajectories/'
+    input_path = './logs/sampled_trajectories_clustering/'
     for row_id in range(start_indx, end_indx):
         try:
             agent_id = all_UTM_data_df.iloc[row_id]['agent_id']
             eVTOL_type = all_UTM_data_df.iloc[row_id]['eVTOL_type']
 
 
-            base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
-            profile_spec_path = "./logs/profiles_eval/profile_spec_"+str(agent_id)+'.csv'
+            # base_path = "./logs/profiles_eval/profile_flight_conditions_"+str(agent_id)+'.csv'
+            # profile_spec_path = "./logs/profiles_eval/profile_spec_"+str(agent_id)+'.csv'
+
+            base_path = "./logs/profiles_eval_clustering_10k_ori/profile_flight_conditions_"+str(agent_id)+'.csv'
+            profile_spec_path = "./logs/profiles_eval_clustering_10k_ori/profile_spec_"+str(agent_id)+'.csv'
+
+
             if os.path.exists(base_path) and os.path.exists(profile_spec_path):
                 # print("profile {} exists!!!".format(agent_id))
                 continue
@@ -612,7 +619,8 @@ def mission_setup(analyses,vehicle,tj,profile_id):
                                     'time_required':time_required
                                     })
     
-    base_path = "./logs/profiles_eval/"
+    # base_path = "./logs/profiles_eval/"
+    base_path = "./logs/profiles_eval_clustering_10k_ori/"
     profile_spec_df.to_csv(base_path+"profile_spec_"+str(profile_id)+'.csv', index=False)
     
     return mission 
@@ -656,6 +664,8 @@ def plot_mission(results,vec_configs,line_style='bo-'):
     return
 
 def save_results(results, profile_id=0):
+    # base_path = "./logs/profiles_eval/"
+    base_path = "./logs/profiles_eval_clustering_10k_ori/"
     #flight conditions
     eVTOL_type = 'lift_and_cruse'
     altitudes = []
@@ -695,7 +705,7 @@ def save_results(results, profile_id=0):
                                     'fesibility':fesibility_profile
                                     })
     
-    base_path = "./logs/profiles_eval/"
+    
     profile_df.to_csv(base_path+"profile_flight_conditions_"+str(profile_id)+'.csv', index=False)
         
     #Aerodynamic Coefficients
@@ -733,46 +743,46 @@ def save_results(results, profile_id=0):
                                     'fesibility':fesibility_profile
                                     })
     
-    base_path = "./logs/profiles_eval/"
+    
     profile_df.to_csv(base_path+"profile_aerodynamic_coefficients_"+str(profile_id)+'.csv', index=False)
     
-    #Aircraft Flight Speed
-    velocitys = []
-    EASs = []
-    machs = []
-    times = []
-    eVTOL_type_profile = []
-    mission_segment_profile = []
-    fesibility_profile = []
-    for label, segment in zip(results.segments.keys(), results.segments.values()): 
-        time     = segment.conditions.frames.inertial.time[:,0] / Units.min
-        velocity = segment.conditions.freestream.velocity[:,0] 
-        density  = segment.conditions.freestream.density[:,0]
-        EAS      = velocity * np.sqrt(density/1.225)
-        mach     = segment.conditions.freestream.mach_number[:,0]
-        velocity = velocity / Units.kts
-        EAS      = EAS / Units.kts
+    # #Aircraft Flight Speed
+    # velocitys = []
+    # EASs = []
+    # machs = []
+    # times = []
+    # eVTOL_type_profile = []
+    # mission_segment_profile = []
+    # fesibility_profile = []
+    # for label, segment in zip(results.segments.keys(), results.segments.values()): 
+    #     time     = segment.conditions.frames.inertial.time[:,0] / Units.min
+    #     velocity = segment.conditions.freestream.velocity[:,0] 
+    #     density  = segment.conditions.freestream.density[:,0]
+    #     EAS      = velocity * np.sqrt(density/1.225)
+    #     mach     = segment.conditions.freestream.mach_number[:,0]
+    #     velocity = velocity / Units.kts
+    #     EAS      = EAS / Units.kts
         
         
-        velocitys     += list(np.squeeze(velocity))
-        EASs          += list(np.squeeze(EAS))
-        machs         += list(mach) 
-        times         += list(time)
-        eVTOL_type_profile += [eVTOL_type]*len(list(time))
-        mission_segment_profile += [label]*len(list(time))
-        fesibility_profile += [segment.converged] * len(list(time))
+    #     velocitys     += list(np.squeeze(velocity))
+    #     EASs          += list(np.squeeze(EAS))
+    #     machs         += list(mach) 
+    #     times         += list(time)
+    #     eVTOL_type_profile += [eVTOL_type]*len(list(time))
+    #     mission_segment_profile += [label]*len(list(time))
+    #     fesibility_profile += [segment.converged] * len(list(time))
         
-    profile_df = pd.DataFrame(data={'eVTOL_type':eVTOL_type_profile,
-                                    'mission_segment':mission_segment_profile,
-                                    'velocity_kts':velocitys,
-                                    'equivalent_airspeed_kts':EASs,
-                                    'Mach':machs,
-                                    'time_min':times,
-                                    'fesibility':fesibility_profile
-                                    })
+    # profile_df = pd.DataFrame(data={'eVTOL_type':eVTOL_type_profile,
+    #                                 'mission_segment':mission_segment_profile,
+    #                                 'velocity_kts':velocitys,
+    #                                 'equivalent_airspeed_kts':EASs,
+    #                                 'Mach':machs,
+    #                                 'time_min':times,
+    #                                 'fesibility':fesibility_profile
+    #                                 })
     
-    base_path = "./logs/profiles_eval/"
-    profile_df.to_csv(base_path+"profile_aircraft_flight_speed_"+str(profile_id)+'.csv', index=False)
+    # base_path = "./logs/profiles_eval_clustering_10k_ori/"
+    # profile_df.to_csv(base_path+"profile_aircraft_flight_speed_"+str(profile_id)+'.csv', index=False)
     
     # Aircraft Electronics
     socs    = []
@@ -835,7 +845,7 @@ def save_results(results, profile_id=0):
                                     'fesibility':fesibility_profile
                                     })
     
-    base_path = "./logs/profiles_eval/"
+    
     profile_df.to_csv(base_path+"profile_aircraft_electronics_"+str(profile_id)+'.csv', index=False)
     
     # Electric Motor and Propeller Efficiencies
@@ -928,7 +938,7 @@ def save_results(results, profile_id=0):
                                     'fesibility':fesibility_profile
                                     })
     
-    base_path = "./logs/profiles_eval/"
+    
     profile_df.to_csv(base_path+"profile_electric_motor_and_propeller_efficiencies_"+str(profile_id)+'.csv', index=False)
       
 
@@ -1146,7 +1156,9 @@ def save_results_as_csv(results, profile_id=0):
 
 if __name__ == '__main__':
     start_time = time.time()
-    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    # all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')
+    all_UTM_data_df = pd.read_csv('./logs/sampled_UTM_dataset_from_clusters.csv')
+
     all_UTM_data_df = all_UTM_data_df[all_UTM_data_df['eVTOL_type']=='lift_and_cruse']
     N = all_UTM_data_df.shape[0] #total N is 9000
     print(N)
