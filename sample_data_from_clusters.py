@@ -19,17 +19,23 @@ def main():
 
     count_less_100 = 0
     count_more_100 = 0
+    total_less_100 = 0
+    total_more_100 = 0
     sampled_dataset = None
     num_samples = 200
+    th = 1300
+
     for root, dirs, files in os.walk(cluster_path):
         for file in files:
             file_path  = os.path.join(root, file)
             df = pd.read_csv(file_path)
             print(df.shape)
-            if df.shape[0]<=60000:
+            if df.shape[0]<=th:
                 count_less_100 += 1
+                total_less_100 += df.shape[0]
             else:
                 count_more_100 += 1
+                total_more_100 += df.shape[0]
 
             df = df.sample(n=min(num_samples, df.shape[0]))
             if sampled_dataset is None:
@@ -37,7 +43,8 @@ def main():
             else:
                 sampled_dataset = pd.concat([sampled_dataset,df], ignore_index=True)
 
-    print('less 100: {} more 100: {}'.format(count_less_100, count_more_100))
+    print('less {}: {}, avg: {} more {}: {}, avg: {} '.format(th, count_less_100, 
+        total_less_100//count_less_100, th, count_more_100, total_more_100//count_more_100))
     # return
     print(sampled_dataset.shape)
     random_sampled_df = pd.read_csv('./logs/sampled_UTM_dataset.csv')

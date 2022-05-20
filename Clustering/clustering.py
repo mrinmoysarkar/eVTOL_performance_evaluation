@@ -93,24 +93,35 @@ if __name__ == '__main__':
     cluster_idxs = np.unique(cluster_idx)
     small_clusters, size_record, small_samples = [], [], []
     density_record, radius_record = [], []
+    density_record_sample, radius_record_sample, size_record_sample = [], [], []
     for j in range(len(cluster_idxs)):
         cluster = np.where(cluster_idx == cluster_idxs[j])[0]
         clustering_info = all_data['agent_id'].iloc[cluster]
         if cluster_idxs[j] in outlier_clusters:
             clustering_filename = 'Outlier_Cluster_' + str(count2) + '.csv'
-            clustering_info.to_csv(output_path+folder_outlier+clustering_filename, index = None)
+            # clustering_info.to_csv(output_path+folder_outlier+clustering_filename, index = None)
             count2 += 1
         else:
             clustering_filename = 'Regular_Cluster_' + str(count1) + '.csv'
-            clustering_info.to_csv(output_path+folder_regular+clustering_filename, index = None)
+            # clustering_info.to_csv(output_path+folder_regular+clustering_filename, index = None)
             count1 += 1
             if len(cluster) <= 60000:
                 small_clusters.append(cluster_idxs[j])
+                print(cluster.shape)
                 Dist = squareform(pdist(current_sample[cluster,:]))
                 cluster_radius, cluster_density, center_idx = density_cal(Dist, cluster)
                 density_record.append(cluster_density)
                 radius_record.append(cluster_radius)
                 size_record.append(len(cluster))
+                # after sampling
+                cluster = np.random.choice(cluster, size=min(200,len(cluster)), replace=False)
+                print(cluster.shape)
+                Dist = squareform(pdist(current_sample[cluster,:]))
+                cluster_radius, cluster_density, center_idx = density_cal(Dist, cluster)
+                density_record_sample.append(cluster_density)
+                radius_record_sample.append(cluster_radius)
+                size_record_sample.append(len(cluster))
+
                 # x, y =  current_sample[cluster,0], current_sample[cluster,1]
                 # z, w =  current_sample[cluster,2], current_sample[cluster,3]
                 # fig = plt.figure()
@@ -122,16 +133,21 @@ if __name__ == '__main__':
                 # plt.savefig(output_path+folder_plots+'Cluser_'+str(cluster_idxs[j])+'.png')
                 # plt.close()
     # Bar plot for the descriptive analysis on the cluster distributions
-    plt.figure(figsize=(4,4), dpi=200)
-    fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row')
-    ax2[0].bar(small_clusters, radius_record)
+    # plt.figure(figsize=(4,4), dpi=200)
+    fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row', dpi=200)
+    ax2[0].bar(np.array(small_clusters)-0.2, radius_record, color='r', width = 0.4)
+    ax2[0].bar(np.array(small_clusters)+0.2, radius_record_sample, color='b', width = 0.4)
     ax2[0].set_xlabel('Cluster id')
     ax2[0].set_ylabel('Cluster radius')
+    ax2[0].legend(labels=['Before sampling', 'After sampling'])
     ax2[1].bar(small_clusters, size_record)
     ax2[1].set_xlabel('Cluster id')
     ax2[1].set_ylabel('Cluster size')
     plt.savefig('Descriptive_Plot.png')
-    
+    plt.show()
+
+    # for i,j,k,l in zip(radius_record, radius_record_sample, density_record, density_record_sample):
+    #     print(i,j,k,l)
     
 
     
