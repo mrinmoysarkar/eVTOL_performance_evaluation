@@ -134,6 +134,12 @@ if __name__ == '__main__':
                 # plt.close()
     # Bar plot for the descriptive analysis on the cluster distributions
     # plt.figure(figsize=(4,4), dpi=200)
+    df = pd.DataFrame({'small_clusters':small_clusters,
+                       'radius_record':radius_record,
+                       'radius_record_sample':radius_record_sample,
+                       'size_record':size_record})
+    df.to_csv('data_cluster.csv', index=None)
+
     fig2, ax2 = plt.subplots(2,1, sharex = 'col', sharey='row', dpi=200)
     ax2[0].bar(np.array(small_clusters)-0.2, radius_record, color='r', width = 0.4)
     ax2[0].bar(np.array(small_clusters)+0.2, radius_record_sample, color='b', width = 0.4)
