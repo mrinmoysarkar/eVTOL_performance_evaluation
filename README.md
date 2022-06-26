@@ -1,4 +1,4 @@
-# ePE: a simulation framework for generation of benchmark database to evaluate eVTOL performance in executing UAM mission
+# A Data-Driven Approach for Performance Evaluation of Autonomous eVTOLs
 
 It is a stand alone software package fully developed in Python for research purpose. To run the code follow the bellow instructions:
 
@@ -11,6 +11,7 @@ Install the following Python packages using pip:
   - scikit-learn
   - scipy
   - zlib
+  - Tensorflow 2.8
 
 N.B.: The code is tested on Python 3.7
 
@@ -40,20 +41,32 @@ The generated dataset from this simulation experiments can be found in the follo
    Folder Name: profiles_eval
 
 Researchers can start their experiments and analysis from the dataset instead of running the simulation to generate the dataset.
-But researchers are also encouraged to implement new features on the simulator to make the simulation more realistic for the development of novel concepts in UAM domain.  
+But researchers are also encouraged to implement new features on the simulator to make the simulation more realistic for the development of novel concepts in UAM domain. 
+
+# visualization of the integrated simulation software (UTM+eVTOL performance analysis) 
+
+
+https://user-images.githubusercontent.com/12240371/175831157-6e86c89e-02ba-4bab-bf48-85e1e269a2de.mp4
+
+
 
 # CASE STUDY on the dataset
 Two case study on the UTM dataset is shown in data_analysis_of_UTM_sim_data.ipynb 
 
 N.B. To run the data_analysis_of_UTM_sim_data.ipynb Please download all_UTM_sim_data.csv and change the data_df = pd.read_csv('./logs/all_UTM_sim_data.csv') with the proper directory in the notebook.
 
+# Clustering analysis
+The clustering analysis code is in ./Clustering folder and corresponding code is in clustering.py file.
+
+# Machine Learning based approach
+The implementation of the machine learning based approach (training and testing) can be found in ML_based_eVTOL_pe.ipynb
 
 # Other comments
 1. The UTM simulator is developed by utilizing libraries developed in the following project:
 https://github.com/colineRamee/UAM_simulator_scitech2021
 
 2. The eVTOL performance is calculated using SUAVE libraries (https://github.com/suavecode/SUAVE).
-A version of the SUAVE(2.4) is included in this project. So no installation is required for the SUAVE libraries.
+A version of the SUAVE(2.5) is included in this project. So no installation is required for the SUAVE libraries.
 
 # References
 Please cite the following papers if you are using this code or the dataset:
